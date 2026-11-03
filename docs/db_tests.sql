@@ -1,0 +1,28 @@
+-- Run:  mysql -u root -p smart_campus < docs/db_tests.sql   (each ERROR line below is EXPECTED)
+USE smart_campus;
+SELECT '1. Two students, same bed (bed 3 already held by student 5)' AS test;
+INSERT INTO room_applications (student_id,bed_id,reservation_expires_at) VALUES (7,3,NOW() + INTERVAL 10 MINUTE);
+SELECT '2. One student, second bed (student 6 already holds bed 15)' AS test;
+INSERT INTO room_applications (student_id,bed_id,reservation_expires_at) VALUES (6,4,NOW() + INTERVAL 10 MINUTE);
+SELECT '3. Student who already has a bed applies again (student 1)' AS test;
+INSERT INTO room_applications (student_id,bed_id,reservation_expires_at) VALUES (1,5,NOW() + INTERVAL 10 MINUTE);
+SELECT '4. Duplicate meal for the same student, day and meal' AS test;
+INSERT INTO mess_logs (student_id,meal_type,meal_date,scan_status,mess_counter_id) VALUES (1,'breakfast',CURDATE(),'success',1);
+SELECT '5. Overlapping leave (student 2 already has 10-14 days ahead)' AS test;
+INSERT INTO leave_applications (student_id,start_date,end_date,reason) VALUES (2,CURDATE() + INTERVAL 12 DAY,CURDATE() + INTERVAL 16 DAY,'Overlap');
+SELECT '6. Approve -> un-approve -> re-approve: still exactly one rebate row' AS test;
+UPDATE leave_applications SET status='pending' WHERE leave_id=1;
+SELECT status, rebate_amount FROM mess_rebates WHERE leave_id=1;
+SELECT rebate_total FROM mess_billing WHERE student_id=1;
+UPDATE leave_applications SET status='approved' WHERE leave_id=1;
+SELECT COUNT(*) AS rebate_rows, MAX(status) AS status, MAX(rebate_amount) AS amount FROM mess_rebates WHERE leave_id=1;
+SELECT '7. No-Dues blocked for student 2 (dues exist)' AS test;
+CALL sp_generate_no_dues(2, @v);
+SELECT '8. No-Dues allowed for student 1 (balance 0)' AS test;
+CALL sp_generate_no_dues(1, @v1);  CALL sp_generate_no_dues(1, @v2);
+SELECT @v1 = @v2 AS same_certificate_returned_twice;
+SELECT '9. Reservation expiry frees the bed' AS test;
+UPDATE room_applications SET reservation_expires_at = NOW() - INTERVAL 1 MINUTE WHERE student_id=6 AND status='reserved';
+SELECT bed_status FROM v_bed_status WHERE bed_id=15;
+CALL sp_expire_stale_reservations();
+SELECT status FROM room_applications WHERE student_id=6;

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login — Smart Campus HMS</title>
+  <meta name="description" content="Login to Smart Campus Hostel Management System">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <style>
+    .login-card { max-width: 480px; }
+    .demo-accounts { max-height: 230px; overflow-y: auto; }
+    .demo-accounts::-webkit-scrollbar { width: 4px; }
+    .demo-accounts::-webkit-scrollbar-thumb { background: var(--border); border-radius:4px; }
+    .gender-tag { font-size:0.62rem; font-weight:700; padding:0.1rem 0.4rem;
+                  border-radius:4px; white-space:nowrap; }
+    .gender-f   { background:rgba(244,114,182,0.15); color:#f472b6; }
+    .gender-m   { background:rgba(96,165,250,0.15);  color:#60a5fa; }
+    .pass-badge { background:rgba(99,102,241,0.13); color:var(--accent);
+                  font-family:monospace; font-size:0.65rem;
+                  padding:0.1rem 0.45rem; border-radius:4px; }
+  </style>
+</head>
+<body>
+
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">
+        <i class="fas {% if cat=='success' %}fa-check-circle{% elif cat=='danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<div class="login-page">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="login-logo">&#127963;</div>
+    <h1 class="login-title">Smart Campus</h1>
+    <p class="login-sub">Hostel Management System &mdash; Sign in to continue</p>
+
+    <!-- ── STAFF / ADMIN ── -->
+    <div class="demo-accounts mb-2">
+      <div class="demo-title">Staff &amp; Admin &mdash; click to fill</div>
+
+      <div class="demo-item" data-email="admin@smartcampus.edu" data-pass="Demo@1234">
+        <span class="demo-email">admin@smartcampus.edu</span>
+        <span class="gender-tag" style="background:rgba(99,102,241,0.15);color:var(--accent)">Admin</span>
+      </div>
+      <div class="demo-item" data-email="warden@smartcampus.edu" data-pass="Demo@1234">
+        <span class="demo-email">warden@smartcampus.edu</span>
+        <span class="gender-tag" style="background:rgba(139,92,246,0.15);color:var(--accent2)">Warden</span>
+      </div>
+      <div class="demo-item" data-email="mess@smartcampus.edu" data-pass="Demo@1234">
+        <span class="demo-email">mess@smartcampus.edu</span>
+        <span class="gender-tag" style="background:rgba(6,182,212,0.15);color:var(--accent3)">Mess Mgr</span>
+      </div>
+      <div class="demo-item" data-email="electrician@smartcampus.edu" data-pass="Demo@1234">
+        <span class="demo-email">electrician@smartcampus.edu</span>
+        <span class="gender-tag" style="background:rgba(245,158,11,0.15);color:var(--warning)">Maintenance</span>
+      </div>
+    </div>
+
+    <!-- ── STUDENTS ── -->
+    <div class="demo-accounts">
+      <div class="demo-title">Students &mdash; each has their own password</div>
+
+      <div class="demo-item" data-email="nibha.kumari@student.edu" data-pass="Nibha@123">
+        <span class="demo-email">Nibha Kumari</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
+          <span class="pass-badge">Nibha@123</span>
+        </span>
+      </div>
+
+      <div class="demo-item" data-email="diya.verma@student.edu" data-pass="Diya@123">
+        <span class="demo-email">Diya Verma</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
+          <span class="pass-badge">Diya@123</span>
+        </span>
+      </div>
+
+      <div class="demo-item" data-email="rohan.gupta@student.edu" data-pass="Rohan@123">
+        <span class="demo-email">Rohan Gupta</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-m">&#9794; Boy &mdash; C.V Raman</span>
+          <span class="pass-badge">Rohan@123</span>
+        </span>
+      </div>
+
+      <div class="demo-item" data-email="ananya.singh@student.edu" data-pass="Ananya@123">
+        <span class="demo-email">Ananya Singh</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
+          <span class="pass-badge">Ananya@123</span>
+        </span>
+      </div>
+
+      <div class="demo-item" data-email="karan.mehta@student.edu" data-pass="Karan@123">
+        <span class="demo-email">Karan Mehta</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-m">&#9794; Boy &mdash; C.V Raman</span>
+          <span class="pass-badge">Karan@123</span>
+        </span>
+      </div>
+
+      <div class="demo-item" data-email="ishita.joshi@student.edu" data-pass="Ishita@123">
+        <span class="demo-email">Ishita Joshi</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
+          <span class="pass-badge">Ishita@123</span>
+        </span>
+      </div>
+
+      <div class="demo-item" data-email="vivaan.patel@student.edu" data-pass="Vivaan@123">
+        <span class="demo-email">Vivaan Patel</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-m">&#9794; Boy &mdash; C.V Raman</span>
+          <span class="pass-badge">Vivaan@123</span>
+        </span>
+      </div>
+
+      <div class="demo-item" data-email="meera.nair@student.edu" data-pass="Meera@123">
+        <span class="demo-email">Meera Nair</span>
+        <span style="display:flex;align-items:center;gap:0.4rem">
+          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
+          <span class="pass-badge">Meera@123</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- ── LOGIN FORM ── -->
+    <form method="POST" action="{{ url_for('auth.login') }}" style="margin-top:1rem">
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input type="email" id="email" name="email" class="form-control"
+               placeholder="your@email.edu" required
+               value="{{ request.form.get('email','') }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control"
+               placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-full"
+              style="justify-content:center;padding:0.75rem">
+        <i class="fas fa-arrow-right-to-bracket"></i> Sign In
+      </button>
+    </form>
+
+    <div class="divider" style="margin-top:1rem">staff password</div>
+    <div style="text-align:center;font-size:0.8rem;color:var(--text-muted)">
+      <code style="background:var(--bg-card2);padding:0.3rem 0.75rem;border-radius:6px;font-size:0.85rem;letter-spacing:1px">Demo@1234</code>
+      &nbsp;&nbsp;
+      <span style="color:var(--text-dim)">students: <em>FirstName@123</em></span>
+    </div>
+
+    <div style="text-align:center;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <span style="color:var(--text-muted);font-size:0.83rem">New student?</span>
+      <a href="{{ url_for('auth.register') }}"
+         style="color:var(--accent);font-weight:700;font-size:0.85rem;text-decoration:none;margin-left:0.4rem">
+        <i class="fas fa-user-plus" style="margin-right:0.25rem"></i>Create Your Account &rarr;
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  // Override demo-item click to also fill individual passwords
+  document.querySelectorAll('.demo-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const email = item.dataset.email;
+      const pass  = item.dataset.pass;
+      const emailField = document.getElementById('email');
+      const passField  = document.getElementById('password');
+      if (emailField) emailField.value = email;
+      if (passField && pass) passField.value = pass;
+      item.style.background = 'rgba(99,102,241,0.2)';
+      setTimeout(() => item.style.background = '', 500);
+    });
+  });
+</script>
+</body>
+</html>

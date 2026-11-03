@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Complaints{% endblock %}
+{% block page_title %}Maintenance Complaints{% endblock %}
+{% block page_sub %}Raise and track your complaints{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">My Account</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.hostel') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
+  <a href="{{ url_for('student.mess') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
+  <a href="{{ url_for('student.leaves') }}" class="nav-link"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>
+  <a href="{{ url_for('student.complaints') }}" class="nav-link active"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('student.fees') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Fees & Payments</a>
+{% endblock %}
+
+{% block content %}
+<!-- Raise Complaint -->
+{% if room %}
+<div class="card mb-3">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-plus-circle" style="color:var(--warning);margin-right:0.5rem"></i>Raise New Complaint</span>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('student.raise_complaint') }}">
+      <input type="hidden" name="room_id" value="{{ room.room_id }}">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select name="category" class="form-control" required>
+            <option value="">— Select Category —</option>
+            <option>Electricity</option><option>Water</option><option>Fan</option>
+            <option>Furniture</option><option>Cleaning</option><option>Internet</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input type="text" name="title" class="form-control" placeholder="Brief description..." required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Detailed Description</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Describe the issue in detail..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-warning"><i class="fas fa-paper-plane"></i> Submit Complaint</button>
+      <span class="text-xs text-muted" style="margin-left:1rem">Room {{ room.room_number }} · {{ room.hostel_name }}</span>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="card mb-3" style="border-color:rgba(245,158,11,0.3)">
+  <div class="card-body" style="text-align:center;padding:2rem;color:var(--text-muted)">
+    <i class="fas fa-bed" style="font-size:2rem;margin-bottom:0.75rem;display:block;color:var(--warning)"></i>
+    You need an active room allocation to raise a complaint.
+    <br><a href="{{ url_for('student.hostel') }}" class="btn btn-primary btn-sm mt-2">Book a Room</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- Complaints History -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-list" style="color:var(--accent);margin-right:0.5rem"></i>My Complaints ({{ complaints|length }})</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Ticket</th><th>Category</th><th>Title</th><th>Status</th><th>Raised On</th><th>Resolution</th></tr></thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr>
+          <td><code style="color:var(--accent);font-size:0.72rem">{{ c.ticket_no or '—' }}</code></td>
+          <td><span class="badge badge-default">{{ c.category }}</span></td>
+          <td class="text-sm" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.title }}</td>
+          <td>
+            <span class="badge
+              {% if c.status=='Resolved' %}badge-success
+              {% elif c.status=='Escalated' %}badge-danger
+              {% elif c.status=='In_Progress' %}badge-warning
+              {% else %}badge-default{% endif %}">
+              {{ c.status }}
+            </span>
+          </td>
+          <td class="text-xs text-muted">{{ c.created_at.strftime('%d %b %Y') if c.created_at else '—' }}</td>
+          <td class="text-xs text-muted">{{ c.resolution_note or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--text-muted)">No complaints raised yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

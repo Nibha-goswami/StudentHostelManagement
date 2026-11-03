@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}Warden Dashboard{% endblock %}
+{% block page_title %}Warden Portal{% endblock %}
+{% block page_sub %}Room applications, leaves, and transfers{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Warden</div>
+  <a href="{{ url_for('warden.dashboard') }}" class="nav-link active"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('warden.rooms') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> Room Overview</a>
+  {% if current_user.role=='admin' %}
+  <div class="nav-section">Admin</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-shield"></i></span> Admin Dashboard</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Occupancy -->
+<div class="grid-2 mb-4">
+  {% for o in occupancy %}
+  <div class="card">
+    <div class="card-body">
+      <div class="flex justify-between mb-2">
+        <span class="fw-bold">{{ o.hostel_name }}</span>
+        <span class="badge {% if o.occupancy_percent>80 %}badge-danger{% elif o.occupancy_percent>60 %}badge-warning{% else %}badge-success{% endif %}">
+          {{ o.occupancy_percent }}%
+        </span>
+      </div>
+      <div class="progress mb-1">
+        <div class="progress-bar {% if o.occupancy_percent>80 %}red{% elif o.occupancy_percent>60 %}amber{% else %}green{% endif %}"
+             style="width:{{ o.occupancy_percent }}%"></div>
+      </div>
+      <div class="flex gap-2 mt-1">
+        <span class="text-xs text-muted"><i class="fas fa-circle" style="color:var(--success);font-size:0.4rem"></i> {{ o.available_beds }} free</span>
+        <span class="text-xs text-muted"><i class="fas fa-circle" style="color:var(--danger);font-size:0.4rem"></i> {{ o.occupied_beds }} occupied</span>
+        <span class="text-xs text-muted">{{ o.total_beds }} total</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pending Room Applications -->
+<div class="card mb-3">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-file-lines" style="color:var(--accent);margin-right:0.5rem"></i>Pending Room Applications ({{ pending_apps|length }})</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Roll No</th><th>Hostel</th><th>Room · Bed</th><th>Status</th><th>Applied</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for a in pending_apps %}
+        <tr>
+          <td class="name">{{ a.student_name }}</td>
+          <td class="text-xs text-muted">{{ a.roll_no }}</td>
+          <td class="text-sm">{{ a.hostel_name }}</td>
+          <td class="text-sm">{{ a.room_number }} · Bed {{ a.bed_label }}</td>
+          <td><span class="badge {% if a.status=='pending' %}badge-warning{% else %}badge-info{% endif %}">{{ a.status }}</span></td>
+          <td class="text-xs text-muted">{{ a.reserved_at.strftime('%d %b %H:%M') if a.reserved_at else '—' }}</td>
+          <td>
+            <div class="flex gap-1">
+              <form method="POST" action="{{ url_for('warden.approve_application', app_id=a.application_id) }}">
+                <button class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
+              </form>
+              <button class="btn btn-danger btn-sm" onclick="openRejectModal({{ a.application_id }})">
+                <i class="fas fa-times"></i> Reject
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="padding:2rem;text-align:center;color:var(--text-muted)">No pending applications</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pending Leaves -->
+<div class="card mb-3">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-calendar-xmark" style="color:var(--warning);margin-right:0.5rem"></i>Pending Leave Requests ({{ leave_requests|length }})</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Roll No</th><th>Dates</th><th>Reason</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for la in leave_requests %}
+        <tr>
+          <td class="name">{{ la.student_name }}</td>
+          <td class="text-xs text-muted">{{ la.roll_no }}</td>
+          <td class="text-xs">{{ la.start_date }} → {{ la.end_date }}</td>
+          <td class="text-sm text-muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ la.reason }}</td>
+          <td>
+            <div class="flex gap-1">
+              <form method="POST" action="{{ url_for('warden.approve_leave', leave_id=la.leave_id) }}">
+                <button class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
+              </form>
+              <form method="POST" action="{{ url_for('warden.reject_leave', leave_id=la.leave_id) }}">
+                <input type="hidden" name="remarks" value="Rejected by warden">
+                <button class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Reject</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--text-muted)">No pending leave requests</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Transfer Requests -->
+{% if transfer_requests %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-arrows-left-right" style="color:var(--accent2);margin-right:0.5rem"></i>Pending Transfer Requests</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>From</th><th>To</th><th>Reason</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for t in transfer_requests %}
+        <tr>
+          <td class="name">{{ t.student_name }}</td>
+          <td class="text-sm">Room {{ t.from_room }} · Bed {{ t.from_bed }}</td>
+          <td class="text-sm">Room {{ t.to_room }} · Bed {{ t.to_bed }}</td>
+          <td class="text-xs text-muted">{{ t.reason or '—' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('warden.approve_transfer', tid=t.transfer_id) }}">
+              <button class="btn btn-success btn-sm"><i class="fas fa-check"></i> Approve</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Reject Modal -->
+<div class="modal-backdrop" id="rejectModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Reject Application</span>
+      <button class="btn-icon" onclick="closeModal('rejectModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" id="rejectForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Remarks (reason for rejection)</label>
+          <input type="text" name="remarks" class="form-control" placeholder="Reason..." required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('rejectModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openRejectModal(appId) {
+  document.getElementById('rejectForm').action = `/warden/application/${appId}/reject`;
+  openModal('rejectModal');
+}
+</script>
+{% endblock %}

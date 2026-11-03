@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block page_sub %}Smart Campus Overview{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Main</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link active">
+    <span class="icon"><i class="fas fa-gauge"></i></span> Dashboard
+  </a>
+  <div class="nav-section">Management</div>
+  <a href="{{ url_for('admin.users') }}" class="nav-link">
+    <span class="icon"><i class="fas fa-users"></i></span> Users
+  </a>
+  <a href="{{ url_for('admin.hostels') }}" class="nav-link">
+    <span class="icon"><i class="fas fa-building"></i></span> Hostels
+  </a>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-link">
+    <span class="icon"><i class="fas fa-wrench"></i></span> Complaints
+  </a>
+  <a href="{{ url_for('admin.finance') }}" class="nav-link">
+    <span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Finance
+  </a>
+  <div class="nav-section">Portals</div>
+  <a href="{{ url_for('warden.dashboard') }}" class="nav-link">
+    <span class="icon"><i class="fas fa-key"></i></span> Warden Portal
+  </a>
+  <a href="{{ url_for('mess.dashboard') }}" class="nav-link">
+    <span class="icon"><i class="fas fa-utensils"></i></span> Mess Portal
+  </a>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="stats-grid mb-4">
+  <div class="stat-card">
+    <div class="stat-icon indigo"><i class="fas fa-users"></i></div>
+    <div class="stat-value">{{ total_users }}</div>
+    <div class="stat-label">Total Active Users</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-user-graduate"></i></div>
+    <div class="stat-value">{{ total_students }}</div>
+    <div class="stat-label">Students</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber"><i class="fas fa-file-lines"></i></div>
+    <div class="stat-value">{{ pending_apps }}</div>
+    <div class="stat-label">Pending Room Apps</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="stat-value">{{ escalated }}</div>
+    <div class="stat-label">Escalated Complaints</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-wrench"></i></div>
+    <div class="stat-value">{{ open_complaints }}</div>
+    <div class="stat-label">Open Complaints</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon cyan"><i class="fas fa-clock"></i></div>
+    <div class="stat-value">{{ pending_leaves }}</div>
+    <div class="stat-label">Pending Leaves</div>
+  </div>
+  <div class="stat-card" style="grid-column: span 2">
+    <div class="stat-icon red"><i class="fas fa-indian-rupee-sign"></i></div>
+    <div class="stat-value">₹{{ '{:,.0f}'.format(total_dues) }}</div>
+    <div class="stat-label">Total Outstanding Dues</div>
+  </div>
+</div>
+
+<div class="grid-2 mb-3">
+  <!-- Hostel Occupancy -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-building" style="color:var(--accent);margin-right:0.5rem"></i>Hostel Occupancy</span>
+    </div>
+    <div class="card-body">
+      {% for h in occupancy %}
+      <div class="mb-3">
+        <div class="flex justify-between mb-1">
+          <span class="fw-bold text-sm">{{ h.hostel_name }}</span>
+          <span class="text-sm text-muted">{{ h.occupied_beds }}/{{ h.total_beds }} beds</span>
+        </div>
+        <div class="progress">
+          <div class="progress-bar {% if h.occupancy_percent > 80 %}red{% elif h.occupancy_percent > 60 %}amber{% else %}green{% endif %}"
+               style="width: {{ h.occupancy_percent }}%"></div>
+        </div>
+        <div class="text-xs text-muted mt-1">{{ h.occupancy_percent }}% occupied · {{ h.available_beds }} available</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Meal Attendance -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-utensils" style="color:var(--success);margin-right:0.5rem"></i>Recent Meal Attendance</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Meal</th><th>Students</th></tr></thead>
+          <tbody>
+            {% for m in meal_attendance %}
+            <tr>
+              <td>{{ m.meal_date }}</td>
+              <td>
+                <span class="badge {% if m.meal_type=='breakfast' %}badge-warning{% elif m.meal_type=='lunch' %}badge-info{% else %}badge-purple{% endif %}">
+                  {{ m.meal_type }}
+                </span>
+              </td>
+              <td class="name">{{ m.students_attended }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2 mb-3">
+  <!-- Recent Complaints -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-wrench" style="color:var(--warning);margin-right:0.5rem"></i>Recent Complaints</span>
+      <a href="{{ url_for('admin.complaints') }}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ticket</th><th>Student</th><th>Category</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for c in recent_complaints %}
+            <tr>
+              <td><code style="font-size:0.7rem;color:var(--accent)">{{ c.ticket_no }}</code></td>
+              <td class="name">{{ c.student_name }}</td>
+              <td><span class="badge badge-default">{{ c.category }}</span></td>
+              <td>
+                <span class="badge {% if c.status=='Resolved' %}badge-success{% elif c.status=='Escalated' %}badge-danger{% elif c.status=='In_Progress' %}badge-warning{% else %}badge-default{% endif %}">
+                  {{ c.status }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Users -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-users" style="color:var(--accent2);margin-right:0.5rem"></i>Recent Users</span>
+      <a href="{{ url_for('admin.users') }}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for u in recent_users %}
+            <tr>
+              <td>
+                <div class="name">{{ u.full_name }}</div>
+                <div class="text-xs text-muted">{{ u.email }}</div>
+              </td>
+              <td><span class="badge badge-info">{{ u.role.replace('_',' ').title() }}</span></td>
+              <td>
+                <span class="badge {% if u.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                  {% if u.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

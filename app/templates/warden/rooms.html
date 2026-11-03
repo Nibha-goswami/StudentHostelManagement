@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block title %}Room Overview{% endblock %}
+{% block page_title %}Room Overview{% endblock %}
+{% block page_sub %}Manage beds and student checkouts{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Warden</div>
+  <a href="{{ url_for('warden.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('warden.rooms') }}" class="nav-link active"><span class="icon"><i class="fas fa-bed"></i></span> Room Overview</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Stats ── -->
+<div class="stats-grid mb-4">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-bed"></i></div>
+    <div class="stat-value">{{ allocations|length }}</div>
+    <div class="stat-label">Active Allocations</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber"><i class="fas fa-door-open"></i></div>
+    <div class="stat-value">{{ beds|selectattr('bed_status','equalto','available')|list|length }}</div>
+    <div class="stat-label">Beds Available</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red"><i class="fas fa-user-slash"></i></div>
+    <div class="stat-value">{{ inactive_students|length }}</div>
+    <div class="stat-label">Checked-Out Students</div>
+  </div>
+</div>
+
+<!-- ── Active Allocations + Checkout ── -->
+<div class="card mb-4">
+  <div class="card-header">
+    <span class="card-title">
+      <i class="fas fa-users" style="color:var(--success);margin-right:0.5rem"></i>
+      Active Allocations &mdash; {{ allocations|length }} students
+    </span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th><th>Roll No</th><th>Dept</th><th>Gender</th>
+          <th>Hostel</th><th>Room · Bed</th><th>Since</th><th>Account</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in allocations %}
+        <tr>
+          <td>
+            <div class="name">{{ a.student_name }}</div>
+            <div class="text-xs text-muted">{{ a.email }}</div>
+          </td>
+          <td class="text-xs text-muted">{{ a.roll_no }}</td>
+          <td class="text-xs">{{ a.department }}</td>
+          <td>
+            <span class="badge {% if a.gender=='female' %}badge-purple{% else %}badge-info{% endif %}">
+              {% if a.gender=='female' %}&#9792; F{% else %}&#9794; M{% endif %}
+            </span>
+          </td>
+          <td class="text-sm">{{ a.hostel_name }}</td>
+          <td class="fw-bold">{{ a.room_number }} · <span style="color:var(--accent)">{{ a.bed_label }}</span></td>
+          <td class="text-xs text-muted">{{ a.allocated_at.strftime('%d %b %Y') if a.allocated_at else '—' }}</td>
+          <td>
+            <span class="badge {% if a.is_active %}badge-success{% else %}badge-danger{% endif %}">
+              {% if a.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-danger btn-sm"
+                    onclick="openCheckoutModal({{ a.student_id }}, '{{ a.student_name|replace("'","") }}', '{{ a.room_number }}', '{{ a.bed_label }}')">
+              <i class="fas fa-right-from-bracket"></i> Checkout
+            </button>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" style="padding:2rem;text-align:center;color:var(--text-muted)">No active allocations</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Checked-Out / Inactive Students ── -->
+{% if inactive_students %}
+<div class="card mb-4">
+  <div class="card-header">
+    <span class="card-title">
+      <i class="fas fa-user-slash" style="color:var(--danger);margin-right:0.5rem"></i>
+      Checked-Out Students &mdash; {{ inactive_students|length }}
+    </span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Student</th><th>Roll No</th><th>Dept</th><th>Gender</th><th>Last Vacated</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for s in inactive_students %}
+        <tr style="opacity:0.75">
+          <td>
+            <div class="name" style="color:var(--text-muted)">{{ s.full_name }}</div>
+            <div class="text-xs text-muted">{{ s.email }}</div>
+          </td>
+          <td class="text-xs text-muted">{{ s.roll_no }}</td>
+          <td class="text-xs">{{ s.department }}</td>
+          <td>
+            <span class="badge {% if s.gender=='female' %}badge-purple{% else %}badge-info{% endif %}" style="opacity:0.6">
+              {% if s.gender=='female' %}&#9792; F{% else %}&#9794; M{% endif %}
+            </span>
+          </td>
+          <td class="text-xs text-muted">
+            {{ s.last_vacated.strftime('%d %b %Y') if s.last_vacated else 'Unknown' }}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('warden.reactivate_student', user_id=s.user_id) }}">
+              <button class="btn btn-success btn-sm"
+                      onclick="return confirm('Reactivate {{ s.full_name }}? They will be able to log in and book a new bed.')">
+                <i class="fas fa-user-check"></i> Reactivate
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Bed Status Grid ── -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-bed" style="color:var(--accent);margin-right:0.5rem"></i>All Beds Status</span>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <span class="badge badge-success"><i class="fas fa-circle" style="font-size:0.4rem"></i> Available</span>
+      <span class="badge badge-danger"><i class="fas fa-circle" style="font-size:0.4rem"></i> Occupied</span>
+      <span class="badge badge-warning"><i class="fas fa-circle" style="font-size:0.4rem"></i> Reserved</span>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Hostel</th><th>Floor</th><th>Room</th><th>Bed</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for b in beds %}
+        <tr>
+          <td class="text-sm">{{ b.hostel_name }}</td>
+          <td>{{ b.floor_no }}</td>
+          <td>{{ b.room_number }}</td>
+          <td class="fw-bold">{{ b.bed_label }}</td>
+          <td>
+            <span class="badge
+              {% if b.bed_status=='available' %}badge-success
+              {% elif b.bed_status=='occupied' %}badge-danger
+              {% elif b.bed_status=='reserved' %}badge-warning
+              {% else %}badge-default{% endif %}">
+              {{ b.bed_status }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Checkout Confirmation Modal ── -->
+<div class="modal-backdrop" id="checkoutModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title">
+        <i class="fas fa-right-from-bracket" style="color:var(--danger);margin-right:0.5rem"></i>
+        Checkout Student
+      </span>
+      <button class="btn-icon" onclick="closeModal('checkoutModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" id="checkoutForm">
+      <div class="modal-body">
+
+        <!-- Student summary -->
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+                    border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.25rem">
+          <div id="checkoutStudentName" class="fw-bold" style="font-size:0.95rem"></div>
+          <div id="checkoutRoomInfo" class="text-xs text-muted mt-1"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Checkout Reason</label>
+          <select name="reason" class="form-control">
+            <option value="Semester end checkout">Semester end checkout</option>
+            <option value="Academic year completion">Academic year completion</option>
+            <option value="Disciplinary action">Disciplinary action</option>
+            <option value="Student request">Student request</option>
+            <option value="Graduation">Graduation</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div style="background:var(--bg-card2);border-radius:10px;padding:1rem;margin-top:0.75rem">
+          <label style="display:flex;align-items:flex-start;gap:0.65rem;cursor:pointer">
+            <input type="checkbox" name="deactivate_account" value="1" id="deactivateCheck"
+                   style="margin-top:0.15rem;accent-color:var(--danger);width:16px;height:16px">
+            <div>
+              <div class="fw-bold text-sm">Also deactivate login account</div>
+              <div class="text-xs text-muted mt-1">
+                Student will not be able to log in until reactivated by warden.
+                Bed is freed <em>regardless</em> of this option.
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);
+                    border-radius:8px;padding:0.65rem 0.85rem;margin-top:1rem;font-size:0.78rem;color:var(--warning)">
+          <i class="fas fa-triangle-exclamation" style="margin-right:0.4rem"></i>
+          The bed will be <strong>freed immediately</strong> and available for new incoming students.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('checkoutModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-right-from-bracket"></i> Confirm Checkout
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openCheckoutModal(studentId, name, room, bed) {
+  document.getElementById('checkoutForm').action = `/warden/student/${studentId}/checkout`;
+  document.getElementById('checkoutStudentName').textContent = name;
+  document.getElementById('checkoutRoomInfo').textContent = `Room ${room}  ·  Bed ${bed}`;
+  document.getElementById('deactivateCheck').checked = false;
+  openModal('checkoutModal');
+}
+</script>
+{% endblock %}

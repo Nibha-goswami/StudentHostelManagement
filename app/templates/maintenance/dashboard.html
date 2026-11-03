@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Maintenance Dashboard{% endblock %}
+{% block page_title %}Maintenance Portal{% endblock %}
+{% block page_sub %}Your assigned complaints{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Maintenance</div>
+  <a href="{{ url_for('maintenance.dashboard') }}" class="nav-link active"><span class="icon"><i class="fas fa-wrench"></i></span> My Complaints</a>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid mb-4">
+  <div class="stat-card">
+    <div class="stat-icon amber"><i class="fas fa-wrench"></i></div>
+    <div class="stat-value">{{ open_count }}</div>
+    <div class="stat-label">Open / In Progress</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+    <div class="stat-value">{{ resolved_count }}</div>
+    <div class="stat-label">Resolved Total</div>
+  </div>
+  {% if staff %}
+  <div class="stat-card">
+    <div class="stat-icon cyan"><i class="fas fa-user-cog"></i></div>
+    <div class="stat-value" style="font-size:1rem">{{ staff.specialization }}</div>
+    <div class="stat-label">Specialization</div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-list" style="color:var(--warning);margin-right:0.5rem"></i>Assigned Complaints</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Ticket</th><th>Student</th><th>Location</th><th>Category</th><th>Issue</th><th>Status</th><th>Update</th></tr></thead>
+      <tbody>
+        {% for c in my_complaints %}
+        <tr>
+          <td><code style="color:{% if c.status=='Escalated' %}var(--danger){% else %}var(--accent){% endif %};font-size:0.7rem">
+            {{ c.ticket_no }}{% if c.status=='Escalated' %} 🔴{% endif %}
+          </code></td>
+          <td class="name">{{ c.student_name }}</td>
+          <td class="text-xs text-muted">{{ c.hostel_name }}<br>Room {{ c.room_number }}</td>
+          <td><span class="badge badge-default">{{ c.category }}</span></td>
+          <td class="text-sm" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.title }}</td>
+          <td>
+            <span class="badge
+              {% if c.status=='Resolved' %}badge-success
+              {% elif c.status=='Escalated' %}badge-danger
+              {% elif c.status=='In_Progress' %}badge-warning
+              {% else %}badge-default{% endif %}">
+              {{ c.status }}
+            </span>
+          </td>
+          <td>
+            {% if c.status != 'Resolved' %}
+            <button class="btn btn-ghost btn-sm" onclick="openUpdateModal({{ c.complaint_id }}, '{{ c.title|replace("'","") }}')">
+              <i class="fas fa-edit"></i> Update
+            </button>
+            {% else %}
+            <span class="text-xs text-muted">Done ✓</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="padding:2rem;text-align:center;color:var(--text-muted)">No complaints assigned to you</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal-backdrop" id="updateModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalComplaintTitle"><i class="fas fa-edit" style="color:var(--accent);margin-right:0.5rem"></i>Update Complaint</span>
+      <button class="btn-icon" onclick="closeModal('updateModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" id="updateForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">New Status</label>
+          <select name="status" class="form-control" required>
+            <option value="In_Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Resolution Note (required if resolving)</label>
+          <textarea name="resolution_note" class="form-control" rows="3" placeholder="Describe what was done..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('updateModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openUpdateModal(cid, title) {
+  document.getElementById('updateForm').action = `/maintenance/complaint/${cid}/update`;
+  document.getElementById('modalComplaintTitle').innerHTML = `<i class="fas fa-edit" style="color:var(--accent);margin-right:0.5rem"></i>${title}`;
+  openModal('updateModal');
+}
+</script>
+{% endblock %}

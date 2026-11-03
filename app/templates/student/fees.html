@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}Fees & Payments{% endblock %}
+{% block page_title %}Fees & Payments{% endblock %}
+{% block page_sub %}Your dues, bills, and payment history{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">My Account</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.hostel') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
+  <a href="{{ url_for('student.mess') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
+  <a href="{{ url_for('student.leaves') }}" class="nav-link"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>
+  <a href="{{ url_for('student.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('student.fees') }}" class="nav-link active"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Fees & Payments</a>
+{% endblock %}
+
+{% block content %}
+{% if ledger %}
+<!-- Balance Card -->
+<div class="card mb-4" style="background:linear-gradient(135deg,{% if ledger.outstanding_balance>0 %}rgba(239,68,68,0.12),rgba(239,68,68,0.04){% else %}rgba(16,185,129,0.12),rgba(16,185,129,0.04){% endif %});border-color:{% if ledger.outstanding_balance>0 %}rgba(239,68,68,0.25){% else %}rgba(16,185,129,0.25){% endif %}">
+  <div class="card-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <div class="text-muted text-sm mb-1">Outstanding Balance</div>
+        <div style="font-size:2.5rem;font-weight:800;letter-spacing:-0.03em" class="{% if ledger.outstanding_balance>0 %}text-danger{% else %}text-success{% endif %}">
+          ₹{{ '{:,.2f}'.format(ledger.outstanding_balance) }}
+        </div>
+      </div>
+      <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div class="fw-bold">₹{{ '{:,.0f}'.format(ledger.hostel_fees) }}</div>
+          <div class="text-xs text-muted">Hostel Fees</div>
+        </div>
+        <div style="text-align:center">
+          <div class="fw-bold">₹{{ '{:,.0f}'.format(ledger.mess_fees) }}</div>
+          <div class="text-xs text-muted">Mess Fees</div>
+        </div>
+        <div style="text-align:center;color:var(--danger)">
+          <div class="fw-bold">₹{{ '{:,.0f}'.format(ledger.fines) }}</div>
+          <div class="text-xs text-muted">Fines</div>
+        </div>
+        <div style="text-align:center;color:var(--success)">
+          <div class="fw-bold">-₹{{ '{:,.0f}'.format(ledger.approved_rebates) }}</div>
+          <div class="text-xs text-muted">Rebates</div>
+        </div>
+        <div style="text-align:center;color:var(--success)">
+          <div class="fw-bold">-₹{{ '{:,.0f}'.format(ledger.payments_made) }}</div>
+          <div class="text-xs text-muted">Payments</div>
+        </div>
+      </div>
+      {% if ledger.outstanding_balance > 0 %}
+      <button class="btn btn-danger" onclick="openModal('payModal')">
+        <i class="fas fa-credit-card"></i> Pay Now
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid-2 mb-3">
+  <!-- Hostel Fees -->
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fas fa-building" style="color:var(--accent);margin-right:0.5rem"></i>Hostel Fees</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Year</th><th>Semester</th><th>Amount</th><th>Due Date</th></tr></thead>
+        <tbody>
+          {% for hf in hostel_fees %}
+          <tr>
+            <td class="text-sm">{{ hf.academic_year }}</td>
+            <td>Sem {{ hf.semester }}</td>
+            <td class="fw-bold">₹{{ '{:,.0f}'.format(hf.amount) }}</td>
+            <td class="text-xs text-muted">{{ hf.due_date }}</td>
+          </tr>
+          {% else %}<tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--text-muted)">No fees</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Mess Bills -->
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fas fa-utensils" style="color:var(--success);margin-right:0.5rem"></i>Mess Bills</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Month</th><th>Gross</th><th>Rebate</th><th>Net</th></tr></thead>
+        <tbody>
+          {% for mb in mess_bills %}
+          <tr>
+            <td class="text-sm">{{ mb.billing_month.strftime('%b %Y') if mb.billing_month else '—' }}</td>
+            <td>₹{{ '{:,.0f}'.format(mb.gross_amount) }}</td>
+            <td class="text-success">-₹{{ '{:,.0f}'.format(mb.rebate_total) }}</td>
+            <td class="fw-bold">₹{{ '{:,.0f}'.format(mb.net_amount) }}</td>
+          </tr>
+          {% else %}<tr><td colspan="4" style="padding:1.5rem;text-align:center;color:var(--text-muted)">No bills</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Fines -->
+{% if fines %}
+<div class="card mb-3">
+  <div class="card-header"><span class="card-title"><i class="fas fa-exclamation-triangle" style="color:var(--danger);margin-right:0.5rem"></i>Fines</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Reason</th><th>Description</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for f in fines %}
+        <tr>
+          <td><span class="badge badge-danger">{{ f.reason.replace('_',' ').title() }}</span></td>
+          <td class="text-sm text-muted">{{ f.description or '—' }}</td>
+          <td class="text-danger fw-bold">₹{{ '{:,.0f}'.format(f.amount) }}</td>
+          <td><span class="badge {% if f.status=='active' %}badge-danger{% else %}badge-default{% endif %}">{{ f.status }}</span></td>
+          <td class="text-xs text-muted">{{ f.imposed_at.strftime('%d %b %Y') if f.imposed_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Payment History -->
+<div class="card">
+  <div class="card-header"><span class="card-title"><i class="fas fa-receipt" style="color:var(--success);margin-right:0.5rem"></i>Payment History</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Amount</th><th>Method</th><th>Status</th><th>Reference</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td class="fw-bold">₹{{ '{:,.0f}'.format(p.amount) }}</td>
+          <td><span class="badge badge-info">{{ p.method.replace('_',' ') }}</span></td>
+          <td><span class="badge {% if p.status=='successful' %}badge-success{% elif p.status=='failed' %}badge-danger{% else %}badge-warning{% endif %}">{{ p.status }}</span></td>
+          <td class="text-xs" style="font-family:monospace;color:var(--accent)">{{ p.reference_no }}</td>
+          <td class="text-xs text-muted">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '—' }}</td>
+        </tr>
+        {% else %}<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--text-muted)">No payments yet</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pay Modal -->
+<div class="modal-backdrop" id="payModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fas fa-credit-card" style="color:var(--success);margin-right:0.5rem"></i>Make Payment</span>
+      <button class="btn-icon" onclick="closeModal('payModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" action="{{ url_for('student.pay_fees') }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Amount (₹)</label>
+          <input type="number" name="amount" class="form-control" min="1" step="0.01"
+                 value="{{ ledger.outstanding_balance if ledger and ledger.outstanding_balance > 0 else '' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <select name="method" class="form-control">
+            <option value="demo_upi">Demo UPI</option>
+            <option value="demo_card">Demo Card</option>
+            <option value="counter_cash">Counter Cash</option>
+          </select>
+        </div>
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:0.75rem;font-size:0.78rem;color:var(--warning)">
+          <i class="fas fa-info-circle"></i> This is a demo payment — no real money is charged.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('payModal')">Cancel</button>
+        <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirm Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

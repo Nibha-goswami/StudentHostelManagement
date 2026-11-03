@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Mess{% endblock %}
+{% block page_title %}Mess & Meals{% endblock %}
+{% block page_sub %}Meal timings and your scan history{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">My Account</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.hostel') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
+  <a href="{{ url_for('student.mess') }}" class="nav-link active"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
+  <a href="{{ url_for('student.leaves') }}" class="nav-link"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>
+  <a href="{{ url_for('student.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('student.fees') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Fees & Payments</a>
+{% endblock %}
+
+{% block content %}
+<!-- Meal Timings -->
+<div class="grid-3 mb-4">
+  {% for meal in meals %}
+  <div class="card">
+    <div class="card-body" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:0.5rem">
+        {% if meal.meal_type=='breakfast' %}🍳{% elif meal.meal_type=='lunch' %}🍱{% else %}🌙{% endif %}
+      </div>
+      <div class="fw-bold" style="font-size:1rem;text-transform:capitalize;margin-bottom:0.25rem">{{ meal.meal_type }}</div>
+      <div class="text-muted text-sm">{{ meal.start_time }} – {{ meal.end_time }}</div>
+      <div class="badge badge-success mt-1">₹{{ meal.cost_per_portion }}/portion</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Billing Info -->
+<div class="stats-grid mb-4">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-file-invoice"></i></div>
+    <div class="stat-value">₹{{ '{:,.0f}'.format(billing.total or 0) }}</div>
+    <div class="stat-label">Total Mess Billed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-tags"></i></div>
+    <div class="stat-value">₹{{ '{:,.0f}'.format(rebate.total_rebate or 0) }}</div>
+    <div class="stat-label">Total Rebates Earned</div>
+  </div>
+</div>
+
+<!-- Scan History -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-qrcode" style="color:var(--accent3);margin-right:0.5rem"></i>Mess Scan History</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Meal</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for ml in meal_logs %}
+        <tr>
+          <td class="text-sm">{{ ml.meal_date }}</td>
+          <td>
+            <span class="badge {% if ml.meal_type=='breakfast' %}badge-warning{% elif ml.meal_type=='lunch' %}badge-info{% else %}badge-purple{% endif %}">
+              {{ ml.meal_type }}
+            </span>
+          </td>
+          <td class="text-xs text-muted">{{ ml.scan_timestamp.strftime('%I:%M %p') if ml.scan_timestamp else '—' }}</td>
+          <td>
+            <span class="badge {% if ml.scan_status=='success' %}badge-success{% elif ml.scan_status=='antipassback' %}badge-warning{% else %}badge-danger{% endif %}">
+              {{ ml.scan_status }}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--text-muted)">No mess records found</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

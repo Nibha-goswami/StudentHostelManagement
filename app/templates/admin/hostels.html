@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Hostels{% endblock %}
+{% block page_title %}Hostel Management{% endblock %}
+{% block page_sub %}Bed availability and occupancy{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Main</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <div class="nav-section">Management</div>
+  <a href="{{ url_for('admin.users') }}" class="nav-link"><span class="icon"><i class="fas fa-users"></i></span> Users</a>
+  <a href="{{ url_for('admin.hostels') }}" class="nav-link active"><span class="icon"><i class="fas fa-building"></i></span> Hostels</a>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('admin.finance') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Finance</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2 mb-3">
+  {% for h in hostels %}
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-building" style="color:{% if h.gender_type=='boys' %}var(--accent){% else %}var(--accent2){% endif %};margin-right:0.5rem"></i>
+        {{ h.name }}
+      </span>
+      <span class="badge {% if h.gender_type=='boys' %}badge-info{% else %}badge-purple{% endif %}">{{ h.gender_type }}</span>
+    </div>
+    <div class="card-body">
+      <div class="flex gap-2 mb-2">
+        <div style="flex:1;background:var(--bg-card2);border-radius:10px;padding:0.75rem;text-align:center">
+          <div style="font-size:1.25rem;font-weight:800">{{ h.room_count }}</div>
+          <div class="text-xs text-muted">Rooms</div>
+        </div>
+      </div>
+      <div class="text-sm text-muted mt-1">
+        <i class="fas fa-user-tie" style="margin-right:4px;color:var(--accent)"></i>
+        Warden: {{ h.warden_name or 'Not assigned' }}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-chart-bar" style="color:var(--success);margin-right:0.5rem"></i>Occupancy Summary</span>
+  </div>
+  <div class="card-body">
+    {% for o in occupancy %}
+    <div class="mb-3">
+      <div class="flex justify-between mb-1">
+        <span class="fw-bold">{{ o.hostel_name }}</span>
+        <span class="text-sm text-muted">{{ o.occupied_beds }}/{{ o.total_beds }} beds · {{ o.occupancy_percent }}%</span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar {% if o.occupancy_percent > 80 %}red{% elif o.occupancy_percent > 60 %}amber{% else %}green{% endif %}"
+             style="width: {{ o.occupancy_percent }}%"></div>
+      </div>
+      <div class="flex gap-2 mt-1">
+        <span class="badge badge-success"><i class="fas fa-circle" style="font-size:0.5rem"></i> {{ o.available_beds }} available</span>
+        <span class="badge badge-danger"><i class="fas fa-circle" style="font-size:0.5rem"></i> {{ o.occupied_beds }} occupied</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Users{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block page_sub %}All system users{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Main</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <div class="nav-section">Management</div>
+  <a href="{{ url_for('admin.users') }}" class="nav-link active"><span class="icon"><i class="fas fa-users"></i></span> Users</a>
+  <a href="{{ url_for('admin.hostels') }}" class="nav-link"><span class="icon"><i class="fas fa-building"></i></span> Hostels</a>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('admin.finance') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Finance</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-users" style="color:var(--accent);margin-right:0.5rem"></i>All Users ({{ users|length }})</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Joined</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="name">{{ u.full_name }}</td>
+          <td class="text-muted">{{ u.email }}</td>
+          <td class="text-muted">{{ u.phone or '—' }}</td>
+          <td>
+            <span class="badge
+              {% if u.role=='admin' %}badge-danger
+              {% elif u.role=='warden' %}badge-purple
+              {% elif u.role=='student' %}badge-success
+              {% elif u.role=='maintenance' %}badge-warning
+              {% else %}badge-info{% endif %}">
+              {{ u.role.replace('_',' ').title() }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if u.is_active %}badge-success{% else %}badge-danger{% endif %}">
+              {% if u.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </td>
+          <td class="text-muted text-xs">{{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.toggle_user', uid=u.user_id) }}" style="display:inline">
+              <button class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-success{% endif %}"
+                      onclick="return confirm('Toggle user status?')">
+                {% if u.is_active %}<i class="fas fa-ban"></i> Deactivate{% else %}<i class="fas fa-check"></i> Activate{% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

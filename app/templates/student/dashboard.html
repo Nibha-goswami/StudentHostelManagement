@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}My Dashboard{% endblock %}
+{% block page_title %}Student Dashboard{% endblock %}
+{% block page_sub %}Welcome back, {{ current_user.full_name }}{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">My Account</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link active"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.hostel') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
+  <a href="{{ url_for('student.mess') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
+  <a href="{{ url_for('student.leaves') }}" class="nav-link"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>
+  <a href="{{ url_for('student.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('student.fees') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Fees & Payments</a>
+{% endblock %}
+
+{% block content %}
+<!-- Room & Balance Summary -->
+<div class="grid-2 mb-3">
+  <div class="card" style="background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.08)); border-color: rgba(99,102,241,0.2)">
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm text-muted">My Room</span>
+        <div class="stat-icon indigo" style="margin-bottom:0;width:36px;height:36px"><i class="fas fa-bed"></i></div>
+      </div>
+      {% if allocation %}
+        <div style="font-size:2rem;font-weight:800;margin-bottom:0.25rem">{{ allocation.hostel_name }}</div>
+        <div class="text-muted text-sm">Room {{ allocation.room_number }} · Bed {{ allocation.bed_label }} · Floor {{ allocation.floor_no }}</div>
+        <span class="badge badge-success mt-1"><i class="fas fa-circle" style="font-size:0.4rem"></i> Active</span>
+      {% else %}
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-muted)">No Room Allocated</div>
+        <a href="{{ url_for('student.hostel') }}" class="btn btn-primary btn-sm mt-1">Book a Bed</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card" style="background: linear-gradient(135deg, {% if ledger and ledger.outstanding_balance > 0 %}rgba(239,68,68,0.1), rgba(239,68,68,0.05){% else %}rgba(16,185,129,0.1), rgba(16,185,129,0.05){% endif %}); border-color: {% if ledger and ledger.outstanding_balance > 0 %}rgba(239,68,68,0.2){% else %}rgba(16,185,129,0.2){% endif %}">
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm text-muted">Outstanding Balance</span>
+        <div class="stat-icon {% if ledger and ledger.outstanding_balance > 0 %}red{% else %}green{% endif %}" style="margin-bottom:0;width:36px;height:36px">
+          <i class="fas fa-indian-rupee-sign"></i>
+        </div>
+      </div>
+      {% if ledger %}
+        <div style="font-size:2rem;font-weight:800;margin-bottom:0.25rem" class="{% if ledger.outstanding_balance > 0 %}text-danger{% else %}text-success{% endif %}">
+          ₹{{ '{:,.0f}'.format(ledger.outstanding_balance) }}
+        </div>
+        <div class="text-muted text-xs">Hostel ₹{{ '{:,.0f}'.format(ledger.hostel_fees) }} · Mess ₹{{ '{:,.0f}'.format(ledger.mess_fees) }} · Paid ₹{{ '{:,.0f}'.format(ledger.payments_made) }}</div>
+        {% if ledger.outstanding_balance > 0 %}
+        <a href="{{ url_for('student.fees') }}" class="btn btn-danger btn-sm mt-1">Pay Now</a>
+        {% else %}
+        <span class="badge badge-success mt-1">All Cleared ✓</span>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="stats-grid mb-4">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-utensils"></i></div>
+    <div class="stat-value">{{ month_meals }}</div>
+    <div class="stat-label">Meals This Month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber"><i class="fas fa-circle-exclamation"></i></div>
+    <div class="stat-value">{{ complaints|selectattr('status','ne','Resolved')|list|length }}</div>
+    <div class="stat-label">Open Complaints</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-calendar"></i></div>
+    <div class="stat-value">{{ leaves|selectattr('status','equalto','pending')|list|length }}</div>
+    <div class="stat-label">Pending Leaves</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Recent Meal Logs -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-utensils" style="color:var(--success);margin-right:0.5rem"></i>Recent Mess Scans</span>
+      <a href="{{ url_for('student.mess') }}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Meal</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for ml in meal_logs %}
+          <tr>
+            <td class="text-xs text-muted">{{ ml.meal_date }}</td>
+            <td><span class="badge badge-default">{{ ml.meal_type }}</span></td>
+            <td>
+              <span class="badge {% if ml.scan_status=='success' %}badge-success{% elif ml.scan_status=='antipassback' %}badge-warning{% else %}badge-danger{% endif %}">
+                {{ ml.scan_status }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center text-muted" style="padding:2rem">No mess records yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Complaints -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-wrench" style="color:var(--warning);margin-right:0.5rem"></i>My Complaints</span>
+      <a href="{{ url_for('student.complaints') }}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ticket</th><th>Category</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr>
+            <td><code style="color:var(--accent);font-size:0.7rem">{{ c.ticket_no }}</code></td>
+            <td class="text-sm">{{ c.category }}</td>
+            <td>
+              <span class="badge {% if c.status=='Resolved' %}badge-success{% elif c.status=='Escalated' %}badge-danger{% elif c.status=='In_Progress' %}badge-warning{% else %}badge-default{% endif %}">
+                {{ c.status }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center text-muted" style="padding:2rem">No complaints raised</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

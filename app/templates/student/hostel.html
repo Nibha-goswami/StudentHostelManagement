@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}My Room{% endblock %}
+{% block page_title %}Hostel & Room{% endblock %}
+{% block page_sub %}Booking, allocation, and transfers{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">My Account</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.hostel') }}" class="nav-link active"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
+  <a href="{{ url_for('student.mess') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
+  <a href="{{ url_for('student.leaves') }}" class="nav-link"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>
+  <a href="{{ url_for('student.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('student.fees') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Fees & Payments</a>
+{% endblock %}
+
+{% block content %}
+{% if allocation %}
+<!-- Current Allocation -->
+<div class="card mb-3" style="border-color:rgba(16,185,129,0.3)">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-check-circle" style="color:var(--success);margin-right:0.5rem"></i>Current Allocation</span>
+    <span class="badge badge-success">Active</span>
+  </div>
+  <div class="card-body">
+    <div class="grid-3">
+      <div style="background:var(--bg-card2);padding:1rem;border-radius:10px;text-align:center">
+        <div style="font-size:1.5rem;font-weight:800">{{ allocation.hostel_name }}</div>
+        <div class="text-xs text-muted mt-1">Hostel</div>
+      </div>
+      <div style="background:var(--bg-card2);padding:1rem;border-radius:10px;text-align:center">
+        <div style="font-size:1.5rem;font-weight:800">{{ allocation.room_number }}</div>
+        <div class="text-xs text-muted mt-1">Room · Floor {{ allocation.floor_no }}</div>
+      </div>
+      <div style="background:var(--bg-card2);padding:1rem;border-radius:10px;text-align:center">
+        <div style="font-size:1.5rem;font-weight:800">Bed {{ allocation.bed_label }}</div>
+        <div class="text-xs text-muted mt-1">Since {{ allocation.allocated_at.strftime('%d %b %Y') if allocation.allocated_at else '—' }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Transfer Request -->
+<div class="card mb-3">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-arrows-left-right" style="color:var(--accent);margin-right:0.5rem"></i>Request Room Transfer</span>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('student.request_transfer') }}">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Transfer to Bed</label>
+          <select name="to_bed_id" class="form-control" required>
+            <option value="">— Select Available Bed —</option>
+            {% for b in available_beds %}
+            <option value="{{ b.bed_id }}">{{ b.hostel_name }} · Room {{ b.room_number }} · Bed {{ b.bed_label }} (Floor {{ b.floor_no }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason</label>
+          <input type="text" name="reason" class="form-control" placeholder="Reason for transfer..." required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Transfer Request</button>
+    </form>
+  </div>
+</div>
+
+{% elif pending_app %}
+<!-- Pending Application -->
+<div class="card mb-3" style="border-color:rgba(245,158,11,0.3)">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-clock" style="color:var(--warning);margin-right:0.5rem"></i>Application Status</span>
+    <span class="badge badge-warning">{{ pending_app.status }}</span>
+  </div>
+  <div class="card-body">
+    <div class="grid-3">
+      <div style="background:var(--bg-card2);padding:1rem;border-radius:10px;text-align:center">
+        <div style="font-size:1.2rem;font-weight:800">{{ pending_app.hostel_name }}</div>
+        <div class="text-xs text-muted mt-1">Hostel</div>
+      </div>
+      <div style="background:var(--bg-card2);padding:1rem;border-radius:10px;text-align:center">
+        <div style="font-size:1.2rem;font-weight:800">Room {{ pending_app.room_number }}</div>
+        <div class="text-xs text-muted mt-1">Bed {{ pending_app.bed_label }}</div>
+      </div>
+      <div style="background:var(--bg-card2);padding:1rem;border-radius:10px;text-align:center">
+        <div style="font-size:0.85rem;font-weight:700;color:var(--warning)">Awaiting Warden Approval</div>
+        <div class="text-xs text-muted mt-1">Applied {{ pending_app.reserved_at.strftime('%d %b') if pending_app.reserved_at else '' }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- Book a Bed -->
+<div class="card mb-3">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-bed" style="color:var(--accent);margin-right:0.5rem"></i>Available Beds — Book Now</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Hostel</th><th>Floor</th><th>Room</th><th>Bed</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for b in available_beds %}
+        <tr>
+          <td class="name">{{ b.hostel_name }}</td>
+          <td>{{ b.floor_no }}</td>
+          <td>{{ b.room_number }}</td>
+          <td><strong>Bed {{ b.bed_label }}</strong></td>
+          <td>
+            <form method="POST" action="{{ url_for('student.book_bed') }}">
+              <input type="hidden" name="bed_id" value="{{ b.bed_id }}">
+              <button class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Book</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--text-muted)">No beds available for your gender hostel</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Transfer History -->
+{% if transfers %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-history" style="color:var(--text-muted);margin-right:0.5rem"></i>Transfer History</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for t in transfers %}
+        <tr>
+          <td class="text-sm">Room {{ t.from_room }} · Bed {{ t.from_bed }}</td>
+          <td class="text-sm">Room {{ t.to_room }} · Bed {{ t.to_bed }}</td>
+          <td class="text-muted text-xs">{{ t.reason or '—' }}</td>
+          <td><span class="badge {% if t.status=='completed' %}badge-success{% elif t.status=='rejected' %}badge-danger{% else %}badge-warning{% endif %}">{{ t.status }}</span></td>
+          <td class="text-xs text-muted">{{ t.requested_at.strftime('%d %b %Y') if t.requested_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

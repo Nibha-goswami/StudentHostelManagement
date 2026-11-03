@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Leave Applications{% endblock %}
+{% block page_title %}Leave & Rebates{% endblock %}
+{% block page_sub %}Apply for leave and track mess rebates{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">My Account</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.hostel') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
+  <a href="{{ url_for('student.mess') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
+  <a href="{{ url_for('student.leaves') }}" class="nav-link active"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>
+  <a href="{{ url_for('student.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('student.fees') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Fees & Payments</a>
+{% endblock %}
+
+{% block content %}
+<!-- Apply for Leave -->
+<div class="card mb-3">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-plus-circle" style="color:var(--accent);margin-right:0.5rem"></i>Apply for Leave</span>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('student.apply_leave') }}">
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input type="date" name="start_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Date</label>
+          <input type="date" name="end_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason</label>
+          <input type="text" name="reason" class="form-control" placeholder="Reason for leave..." required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Application</button>
+      <span class="text-xs text-muted" style="margin-left:1rem">
+        <i class="fas fa-info-circle"></i> Leaves ≥3 days earn a mess rebate automatically upon approval
+      </span>
+    </form>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Leave History -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-list" style="color:var(--accent2);margin-right:0.5rem"></i>My Leave Applications</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Dates</th><th>Reason</th><th>Status</th><th>Remarks</th></tr></thead>
+        <tbody>
+          {% for la in leaves %}
+          <tr>
+            <td class="text-xs">
+              <div>{{ la.start_date }}</div>
+              <div class="text-muted">to {{ la.end_date }}</div>
+            </td>
+            <td class="text-sm" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ la.reason }}</td>
+            <td>
+              <span class="badge
+                {% if la.status=='approved' %}badge-success
+                {% elif la.status=='rejected' %}badge-danger
+                {% elif la.status=='cancelled' %}badge-default
+                {% else %}badge-warning{% endif %}">
+                {{ la.status }}
+              </span>
+            </td>
+            <td class="text-xs text-muted">{{ la.remarks or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--text-muted)">No leave applications yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Rebates -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-tags" style="color:var(--success);margin-right:0.5rem"></i>Mess Rebates Earned</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Days</th><th>Rate/Day</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for r in rebates %}
+          <tr>
+            <td class="name">{{ r.rebate_days }} days</td>
+            <td class="text-muted">₹{{ r.rate_per_day }}</td>
+            <td class="text-success fw-bold">₹{{ '{:,.0f}'.format(r.rebate_amount) }}</td>
+            <td>
+              <span class="badge {% if r.rebate_status=='applied' %}badge-success{% else %}badge-danger{% endif %}">
+                {{ r.rebate_status }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--text-muted)">No rebates yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

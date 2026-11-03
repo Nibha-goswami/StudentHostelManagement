@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Mess Dashboard{% endblock %}
+{% block page_title %}Mess Manager Portal{% endblock %}
+{% block page_sub %}Attendance, billing and scan logs{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Mess Manager</div>
+  <a href="{{ url_for('mess.dashboard') }}" class="nav-link active"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('mess.billing') }}" class="nav-link"><span class="icon"><i class="fas fa-file-invoice"></i></span> Billing</a>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid mb-4">
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-utensils"></i></div>
+    <div class="stat-value">{{ today_meals }}</div>
+    <div class="stat-label">Meals Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon cyan"><i class="fas fa-file-invoice"></i></div>
+    <div class="stat-value">₹{{ '{:,.0f}'.format(billing_summary.total_billed or 0) }}</div>
+    <div class="stat-label">Billed This Month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-tags"></i></div>
+    <div class="stat-value">₹{{ '{:,.0f}'.format(rebate_summary.total_rebates or 0) }}</div>
+    <div class="stat-label">Total Rebates Applied</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber"><i class="fas fa-users"></i></div>
+    <div class="stat-value">{{ billing_summary.billed_students or 0 }}</div>
+    <div class="stat-label">Students Billed</div>
+  </div>
+</div>
+
+<!-- Meal Timings -->
+<div class="grid-3 mb-4">
+  {% for meal in meals %}
+  <div class="card">
+    <div class="card-body" style="text-align:center">
+      <div style="font-size:2rem;margin-bottom:0.5rem">
+        {% if meal.meal_type=='breakfast' %}🍳{% elif meal.meal_type=='lunch' %}🍱{% else %}🌙{% endif %}
+      </div>
+      <div class="fw-bold" style="text-transform:capitalize">{{ meal.meal_type }}</div>
+      <div class="text-muted text-sm">{{ meal.start_time }} – {{ meal.end_time }}</div>
+      <div class="badge badge-success mt-1">₹{{ meal.cost_per_portion }}/portion</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="grid-2">
+  <!-- Recent Attendance -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-chart-bar" style="color:var(--success);margin-right:0.5rem"></i>Recent Attendance</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Meal</th><th>Students</th></tr></thead>
+        <tbody>
+          {% for a in attendance %}
+          <tr>
+            <td class="text-sm">{{ a.meal_date }}</td>
+            <td><span class="badge {% if a.meal_type=='breakfast' %}badge-warning{% elif a.meal_type=='lunch' %}badge-info{% else %}badge-purple{% endif %}">{{ a.meal_type }}</span></td>
+            <td class="name">{{ a.students_attended }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Scan Logs -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fas fa-qrcode" style="color:var(--accent3);margin-right:0.5rem"></i>Recent Scans</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>Meal</th><th>Time</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for log in recent_logs %}
+          <tr>
+            <td class="text-sm name">{{ log.student_name or 'Unknown' }}</td>
+            <td><span class="badge badge-default">{{ log.meal_type }}</span></td>
+            <td class="text-xs text-muted">{{ log.scan_timestamp.strftime('%H:%M') if log.scan_timestamp else '—' }}</td>
+            <td><span class="badge {% if log.scan_status=='success' %}badge-success{% elif log.scan_status=='antipassback' %}badge-warning{% else %}badge-danger{% endif %}">{{ log.scan_status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

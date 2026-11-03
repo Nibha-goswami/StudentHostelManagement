@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Mess Billing{% endblock %}
+{% block page_title %}Mess Billing{% endblock %}
+{% block page_sub %}Monthly billing and rebates{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Mess Manager</div>
+  <a href="{{ url_for('mess.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('mess.billing') }}" class="nav-link active"><span class="icon"><i class="fas fa-file-invoice"></i></span> Billing</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-file-invoice" style="color:var(--accent);margin-right:0.5rem"></i>All Mess Bills</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Roll No</th><th>Month</th><th>Gross</th><th>Rebate</th><th>Net Amount</th></tr></thead>
+      <tbody>
+        {% for b in bills %}
+        <tr>
+          <td class="name">{{ b.student_name }}</td>
+          <td class="text-xs text-muted">{{ b.roll_no }}</td>
+          <td class="text-sm">{{ b.billing_month.strftime('%B %Y') if b.billing_month else '—' }}</td>
+          <td>₹{{ '{:,.0f}'.format(b.gross_amount) }}</td>
+          <td class="text-success">-₹{{ '{:,.0f}'.format(b.rebate_total) }}</td>
+          <td class="fw-bold">₹{{ '{:,.0f}'.format(b.net_amount) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="padding:2rem;text-align:center;color:var(--text-muted)">No billing records</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

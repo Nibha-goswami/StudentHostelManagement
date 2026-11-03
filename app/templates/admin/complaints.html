@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Complaints{% endblock %}
+{% block page_title %}Maintenance Complaints{% endblock %}
+{% block page_sub %}Track and assign complaints{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">Main</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <div class="nav-section">Management</div>
+  <a href="{{ url_for('admin.users') }}" class="nav-link"><span class="icon"><i class="fas fa-users"></i></span> Users</a>
+  <a href="{{ url_for('admin.hostels') }}" class="nav-link"><span class="icon"><i class="fas fa-building"></i></span> Hostels</a>
+  <a href="{{ url_for('admin.complaints') }}" class="nav-link active"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('admin.finance') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Finance</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title"><i class="fas fa-wrench" style="color:var(--warning);margin-right:0.5rem"></i>All Complaints ({{ complaints|length }})</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Ticket</th><th>Student</th><th>Location</th><th>Category</th><th>Title</th><th>Status</th><th>Date</th><th>Assign</th></tr>
+      </thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr>
+          <td><code style="color:var(--accent);font-size:0.72rem">{{ c.ticket_no or '—' }}</code></td>
+          <td class="name">{{ c.student_name }}</td>
+          <td class="text-xs text-muted">{{ c.hostel_name }}<br>Room {{ c.room_number }}</td>
+          <td><span class="badge badge-default">{{ c.category }}</span></td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.title }}</td>
+          <td>
+            <span class="badge
+              {% if c.status=='Resolved' %}badge-success
+              {% elif c.status=='Escalated' %}badge-danger
+              {% elif c.status=='In_Progress' %}badge-warning
+              {% else %}badge-default{% endif %}">
+              {{ c.status }}
+            </span>
+          </td>
+          <td class="text-xs text-muted">{{ c.created_at.strftime('%d %b') if c.created_at else '—' }}</td>
+          <td>
+            {% if c.status not in ('Resolved',) %}
+            <button class="btn btn-ghost btn-sm" onclick="openAssignModal({{ c.complaint_id }})">
+              <i class="fas fa-user-plus"></i> Assign
+            </button>
+            {% else %}
+            <span class="text-xs text-muted">Done</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Assign Modal -->
+<div class="modal-backdrop" id="assignModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><i class="fas fa-user-plus" style="color:var(--accent);margin-right:0.5rem"></i>Assign Staff</span>
+      <button class="btn-icon" onclick="closeModal('assignModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.assign_complaint') }}">
+      <div class="modal-body">
+        <input type="hidden" name="complaint_id" id="modal_complaint_id">
+        <div class="form-group">
+          <label class="form-label">Select Maintenance Staff</label>
+          <select name="staff_id" class="form-control" required>
+            <option value="">— Select Staff —</option>
+            {% for s in staff %}
+            <option value="{{ s.staff_id }}">{{ s.full_name }} ({{ s.specialization }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('assignModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Assign</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openAssignModal(cid) {
+  document.getElementById('modal_complaint_id').value = cid;
+  openModal('assignModal');
+}
+</script>
+{% endblock %}
