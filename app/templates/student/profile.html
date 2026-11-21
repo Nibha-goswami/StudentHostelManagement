@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block page_sub %}Personal, academic, and hostel details{% endblock %}
+
+{% block sidebar %}
+  <div class="nav-section">My Account</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link active"><span class="icon"><i class="fas fa-user"></i></span> My Profile</a>
+  <a href="{{ url_for('student.hostel') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
+  <a href="{{ url_for('student.mess') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
+  <a href="{{ url_for('student.leaves') }}" class="nav-link"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>
+  <a href="{{ url_for('student.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
+  <a href="{{ url_for('student.fees') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Fees & Payments</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2 mb-4">
+  <!-- ── Personal & Academic Details ── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-id-card" style="color:var(--accent);margin-right:0.5rem"></i>
+        Student Information
+      </span>
+      <span class="badge badge-success"><i class="fas fa-check-circle" style="font-size:0.55rem"></i> Active Student</span>
+    </div>
+    <div class="card-body">
+      <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:1.5rem">
+        <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:800;box-shadow:0 0 20px var(--glow)">
+          {{ student.full_name[0] }}
+        </div>
+        <div>
+          <h2 style="font-size:1.35rem;font-weight:800;margin-bottom:0.25rem">{{ student.full_name }}</h2>
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+            <span class="badge badge-purple">{{ student.roll_no }}</span>
+            <span class="badge {% if student.gender=='female' %}badge-purple{% else %}badge-info{% endif %}">
+              {% if student.gender=='female' %}&#9792; Female{% else %}&#9794; Male{% endif %}
+            </span>
+            <span class="text-xs text-muted">Year {{ student.year_of_study }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;background:var(--bg-card2);padding:1.25rem;border-radius:12px;border:1px solid var(--border)">
+        <div>
+          <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em">Department</div>
+          <div class="fw-bold mt-1" style="font-size:0.95rem">{{ student.department }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em">University Email</div>
+          <div class="fw-bold mt-1 text-sm" style="color:#a5b4fc">{{ student.email }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em">Hostel Allocated</div>
+          <div class="fw-bold mt-1 text-sm">
+            {% if student.hostel_name %}
+              {{ student.hostel_name }}
+            {% else %}
+              <span class="text-muted">Not Allocated</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em">Room · Bed</div>
+          <div class="fw-bold mt-1 text-sm">
+            {% if student.room_number %}
+              Room {{ student.room_number }} · Bed {{ student.bed_label }} (Floor {{ student.floor_no }})
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Update Contact Details -->
+      <form method="POST" action="{{ url_for('student.profile') }}" style="margin-top:1.5rem">
+        <input type="hidden" name="action" value="update_contact">
+        <div class="form-group">
+          <label class="form-label" for="phone">Student Mobile Phone</label>
+          <input type="text" id="phone" name="phone" class="form-control"
+                 placeholder="e.g. 9876543210" value="{{ student.phone or '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="guardian_phone">Guardian / Emergency Contact Phone</label>
+          <input type="text" id="guardian_phone" name="guardian_phone" class="form-control"
+                 placeholder="e.g. 9123456780" value="{{ student.guardian_phone or '' }}">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="fas fa-save"></i> Save Contact Info
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Password & Security ── -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">
+        <i class="fas fa-shield-alt" style="color:var(--success);margin-right:0.5rem"></i>
+        Account Security & Password
+      </span>
+    </div>
+    <div class="card-body">
+      <p class="text-sm text-muted mb-3">
+        Keep your account secure by using a strong, unique password.
+      </p>
+
+      <form method="POST" action="{{ url_for('student.profile') }}">
+        <input type="hidden" name="action" value="change_password">
+
+        <!-- Hidden username binding for password managers to associate credentials with the logged-in student -->
+        <input type="text" name="username" value="{{ student.email }}" autocomplete="username" readonly hidden style="display:none;" aria-hidden="true">
+        
+        <div class="form-group">
+          <label class="form-label" for="current_password">Current Password</label>
+          <div style="position:relative">
+            <input type="password" id="current_password" name="current_password" class="form-control"
+                   placeholder="Enter your current password" required autocomplete="current-password" style="padding-right:2.5rem">
+            <button type="button" class="btn-icon" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%)"
+                    onclick="toggleInput('current_password')">
+              <i class="fas fa-eye" id="current_password_icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="new_password">New Password</label>
+          <div style="position:relative">
+            <input type="password" id="new_password" name="new_password" class="form-control"
+                   placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password" style="padding-right:2.5rem">
+            <button type="button" class="btn-icon" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%)"
+                    onclick="toggleInput('new_password')">
+              <i class="fas fa-eye" id="new_password_icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm New Password</label>
+          <div style="position:relative">
+            <input type="password" id="confirm_password" name="confirm_password" class="form-control"
+                   placeholder="Re-enter new password" minlength="6" required autocomplete="new-password" style="padding-right:2.5rem">
+            <button type="button" class="btn-icon" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%)"
+                    onclick="toggleInput('confirm_password')">
+              <i class="fas fa-eye" id="confirm_password_icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-lock"></i> Update Password
+        </button>
+      </form>
+
+      {% if ledger %}
+      <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)">
+        <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem">Dues Overview</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="text-sm">Outstanding Balance:</span>
+          <span class="fw-bold {% if ledger.outstanding_balance > 0 %}text-danger{% else %}text-success{% endif %}">
+            ₹{{ '{:,.0f}'.format(ledger.outstanding_balance) }}
+          </span>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleInput(id) {
+  const input = document.getElementById(id);
+  const icon = document.getElementById(id + '_icon');
+  if (input && icon) {
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    icon.classList.toggle('fa-eye', !isPass);
+    icon.classList.toggle('fa-eye-slash', isPass);
+  }
+}
+</script>
+{% endblock %}
+

@@ -9,6 +9,9 @@
     <span class="icon"><i class="fas fa-gauge"></i></span> Dashboard
   </a>
   <div class="nav-section">Management</div>
+  <a href="{{ url_for('admin.students') }}" class="nav-link">
+    <span class="icon"><i class="fas fa-user-graduate"></i></span> Students
+  </a>
   <a href="{{ url_for('admin.users') }}" class="nav-link">
     <span class="icon"><i class="fas fa-users"></i></span> Users
   </a>
@@ -38,10 +41,10 @@
     <div class="stat-value">{{ total_users }}</div>
     <div class="stat-label">Total Active Users</div>
   </div>
-  <div class="stat-card">
+  <div class="stat-card" onclick="location.href='{{ url_for('admin.students') }}'" style="cursor:pointer" title="Click to view all student records">
     <div class="stat-icon purple"><i class="fas fa-user-graduate"></i></div>
     <div class="stat-value">{{ total_students }}</div>
-    <div class="stat-label">Students</div>
+    <div class="stat-label">Students (Directory)</div>
   </div>
   <div class="stat-card">
     <div class="stat-icon amber"><i class="fas fa-file-lines"></i></div>

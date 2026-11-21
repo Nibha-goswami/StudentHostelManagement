@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 from functools import wraps
+from werkzeug.security import check_password_hash, generate_password_hash
 from app import mysql
 import uuid, secrets, string
 from datetime import datetime, date
@@ -326,3 +327,73 @@ def pay_fees():
         flash(f'Payment failed: {str(e)}', 'danger')
     cur.close()
     return redirect(url_for('student.fees'))
+
+@student_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+@student_required
+def profile():
+    sid = get_student_id()
+    cur = mysql.connection.cursor()
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+
+        if action == 'update_contact':
+            phone = request.form.get('phone', '').strip()
+            guardian_phone = request.form.get('guardian_phone', '').strip()
+            try:
+                cur.execute("UPDATE users SET phone=%s WHERE user_id=%s", (phone or None, current_user.id))
+                cur.execute("UPDATE students SET guardian_phone=%s WHERE student_id=%s", (guardian_phone or None, sid))
+                mysql.connection.commit()
+                flash('Contact details updated successfully.', 'success')
+            except Exception as e:
+                mysql.connection.rollback()
+                flash(f'Update failed: {str(e)}', 'danger')
+
+        elif action == 'change_password':
+            current_pass = request.form.get('current_password', '')
+            new_pass = request.form.get('new_password', '')
+            confirm_pass = request.form.get('confirm_password', '')
+
+            cur.execute("SELECT password_hash FROM users WHERE user_id=%s", (current_user.id,))
+            user_pwd = cur.fetchone()
+
+            if not user_pwd or not check_password_hash(user_pwd['password_hash'], current_pass):
+                flash('Current password is incorrect.', 'danger')
+            elif len(new_pass) < 6:
+                flash('New password must be at least 6 characters long.', 'danger')
+            elif new_pass != confirm_pass:
+                flash('New passwords do not match.', 'danger')
+            else:
+                try:
+                    new_hash = generate_password_hash(new_pass)
+                    cur.execute("UPDATE users SET password_hash=%s WHERE user_id=%s", (new_hash, current_user.id))
+                    mysql.connection.commit()
+                    flash('Your password has been changed successfully.', 'success')
+                except Exception as e:
+                    mysql.connection.rollback()
+                    flash(f'Password change failed: {str(e)}', 'danger')
+
+        return redirect(url_for('student.profile'))
+
+    # Fetch complete personal details for the student
+    cur.execute("""SELECT u.user_id, u.email, u.full_name, u.phone, u.created_at,
+                          s.student_id, s.roll_no, s.department, s.year_of_study, s.gender, s.guardian_phone,
+                          ra.status as allocation_status, b.bed_label, r.room_number, r.floor_no, h.name as hostel_name
+                   FROM users u
+                   JOIN students s ON s.user_id = u.user_id
+                   LEFT JOIN room_allocations ra ON ra.student_id = s.student_id AND ra.status = 'active'
+                   LEFT JOIN beds b ON b.bed_id = ra.bed_id
+                   LEFT JOIN rooms r ON r.room_id = b.room_id
+                   LEFT JOIN hostels h ON h.hostel_id = r.hostel_id
+                   WHERE u.user_id = %s""", (current_user.id,))
+    student_profile = cur.fetchone()
+
+    cur.execute("""SELECT sl.hostel_fees, sl.mess_fees, sl.fines,
+                          sl.approved_rebates, sl.payments_made, sl.outstanding_balance
+                   FROM student_ledger sl WHERE sl.student_id=%s""", (sid,))
+    ledger = cur.fetchone()
+    cur.close()
+
+    return render_template('student/profile.html', student=student_profile, ledger=ledger)
+

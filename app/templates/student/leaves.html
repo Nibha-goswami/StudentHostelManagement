@@ -6,6 +6,7 @@
 {% block sidebar %}
   <div class="nav-section">My Account</div>
   <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link"><span class="icon"><i class="fas fa-user"></i></span> My Profile</a>
   <a href="{{ url_for('student.hostel') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> My Room</a>
   <a href="{{ url_for('student.mess') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess</a>
   <a href="{{ url_for('student.leaves') }}" class="nav-link active"><span class="icon"><i class="fas fa-calendar-xmark"></i></span> Leave</a>

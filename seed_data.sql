@@ -12,7 +12,7 @@ INSERT INTO system_settings VALUES
 
 INSERT INTO users (user_id,email,password_hash,full_name,phone,role) VALUES
  (1,'admin@smartcampus.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Dr. Rajesh Kulkarni','9000000001','admin'),
- (2,'warden@smartcampus.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Mrs. Sunita Deshmukh','9000000002','warden'),
+ (2,'boys.warden@smartcampus.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Vikram Sharma','9000000002','warden'),
  (3,'mess@smartcampus.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Mr. Prakash Rao','9000000003','mess_manager'),
  (4,'electrician@smartcampus.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Ramesh Yadav','9000000004','maintenance'),
  (5,'plumber@smartcampus.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Suresh Pawar','9000000005','maintenance'),
@@ -23,7 +23,8 @@ INSERT INTO users (user_id,email,password_hash,full_name,phone,role) VALUES
  (10,'karan.mehta@student.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Karan Mehta','9100000005','student'),
  (11,'ishita.joshi@student.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Ishita Joshi','9100000006','student'),
  (12,'vivaan.patel@student.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Vivaan Patel','9100000007','student'),
- (13,'meera.nair@student.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Meera Nair','9100000008','student');
+ (13,'meera.nair@student.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Meera Nair','9100000008','student'),
+ (14,'girls.warden@smartcampus.edu','scrypt:32768:8:1$30cStnIxlQTTlGBp$4bfad1a7634453dbae8193f56e8d04161efa1fedc1e4d4c8d56f1173a3ead39eeab584c5f42782c42a341072c5618d071eebf7453e471da6de8cf7d5b052b930','Reena Verma','9000000012','warden');
 
 INSERT INTO students (student_id,user_id,roll_no,department,year_of_study,gender,guardian_phone) VALUES
  (1,6,'CS2201','Computer Science',3,'male','9200000001'),
@@ -38,7 +39,10 @@ INSERT INTO students (student_id,user_id,roll_no,department,year_of_study,gender
 INSERT INTO maintenance_staff (staff_id,user_id,specialization) VALUES (1,4,'Electricity'),(2,5,'Water');
 
 INSERT INTO hostels (hostel_id,name,gender_type,warden_user_id) VALUES
- (1,'Himalaya Boys Hostel','boys',2),(2,'Ganga Girls Hostel','girls',2);
+ (1,'Himalaya Boys Hostel','boys',2),(2,'Ganga Girls Hostel','girls',14);
+
+INSERT INTO warden_staff (warden_id,user_id,warden_type,hostel_id) VALUES
+ (1,2,'boys',1),(2,14,'girls',2);
 
 -- 2 hostels x 2 floors x 2 rooms = 8 rooms (101,102,201,202), 3 beds each = 24 beds
 INSERT INTO rooms (hostel_id,room_number,floor_no,capacity)
@@ -53,7 +57,7 @@ ORDER BY r.room_id, l.lbl;
 -- Applications: students 1-4 approved (allocated), 5 pending, 6 holds a live 10-minute reservation
 INSERT INTO room_applications (student_id,bed_id,status,reservation_expires_at,reviewed_by,reviewed_at) VALUES
  (1,1,'approved',NOW(),2,NOW()),(3,2,'approved',NOW(),2,NOW()),
- (2,13,'approved',NOW(),2,NOW()),(4,14,'approved',NOW(),2,NOW());
+ (2,13,'approved',NOW(),14,NOW()),(4,14,'approved',NOW(),14,NOW());
 INSERT INTO room_applications (student_id,bed_id,status,reservation_expires_at) VALUES
  (5,3,'pending',NOW() + INTERVAL 1 DAY);
 INSERT INTO room_applications (student_id,bed_id,status,reservation_expires_at) VALUES

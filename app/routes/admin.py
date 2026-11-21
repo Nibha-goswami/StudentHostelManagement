@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
+from werkzeug.security import generate_password_hash
 from app import mysql
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -86,6 +87,60 @@ def toggle_user(uid):
     cur.close()
     flash('User status updated.', 'success')
     return redirect(url_for('admin.users'))
+
+@admin_bp.route('/students')
+@login_required
+@admin_required
+def students():
+    cur = mysql.connection.cursor()
+    cur.execute("""SELECT s.student_id, s.user_id, s.roll_no, s.department, s.year_of_study, s.gender, s.guardian_phone,
+                          u.full_name, u.email, u.phone, u.is_active, u.created_at,
+                          COALESCE(sl.outstanding_balance, 0) as outstanding_balance,
+                          COALESCE(sl.hostel_fees, 0) as hostel_fees,
+                          COALESCE(sl.mess_fees, 0) as mess_fees,
+                          COALESCE(sl.payments_made, 0) as payments_made,
+                          h.name as hostel_name, r.room_number, b.bed_label
+                   FROM students s
+                   JOIN users u ON u.user_id=s.user_id
+                   LEFT JOIN student_ledger sl ON sl.student_id=s.student_id
+                   LEFT JOIN room_allocations ra ON ra.student_id=s.student_id AND ra.status='active'
+                   LEFT JOIN beds b ON b.bed_id=ra.bed_id
+                   LEFT JOIN rooms r ON r.room_id=b.room_id
+                   LEFT JOIN hostels h ON h.hostel_id=r.hostel_id
+                   ORDER BY s.roll_no ASC""")
+    student_records = cur.fetchall()
+    cur.close()
+    return render_template('admin/students.html', students=student_records)
+
+@admin_bp.route('/user/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+@admin_required
+def reset_password(user_id):
+    new_password = request.form.get('new_password', '').strip()
+    if len(new_password) < 6:
+        flash('Password must be at least 6 characters long.', 'danger')
+        return redirect(request.referrer or url_for('admin.users'))
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT user_id, full_name, email, role FROM users WHERE user_id=%s", (user_id,))
+    target_user = cur.fetchone()
+    if not target_user:
+        flash('User not found.', 'danger')
+        cur.close()
+        return redirect(request.referrer or url_for('admin.users'))
+
+    try:
+        hashed = generate_password_hash(new_password)
+        cur.execute("UPDATE users SET password_hash=%s WHERE user_id=%s", (hashed, user_id))
+        mysql.connection.commit()
+        flash(f"Password for {target_user['full_name']} ({target_user['role'].title()}) has been reset successfully.", 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Failed to reset password: {str(e)}", 'danger')
+    finally:
+        cur.close()
+
+    return redirect(request.referrer or url_for('admin.users'))
 
 @admin_bp.route('/hostels')
 @login_required

@@ -23,19 +23,6 @@ document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
   });
 });
 
-// Demo account quick-fill on login page
-document.querySelectorAll('.demo-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const email = item.dataset.email;
-    const pass  = item.dataset.pass;
-    const emailField = document.getElementById('email');
-    const passField  = document.getElementById('password');
-    if (emailField && email) emailField.value = email;
-    if (passField  && pass)  passField.value  = pass;
-    item.style.background = 'rgba(99,102,241,0.2)';
-    setTimeout(() => item.style.background = '', 500);
-  });
-});
 
 // Mobile sidebar toggle
 const sidebarToggle = document.getElementById('sidebarToggle');

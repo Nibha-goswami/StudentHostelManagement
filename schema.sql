@@ -58,6 +58,15 @@ CREATE TABLE hostels (
   CONSTRAINT fk_hostels_warden FOREIGN KEY (warden_user_id) REFERENCES users(user_id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+CREATE TABLE warden_staff (
+  warden_id    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT UNSIGNED NOT NULL UNIQUE,
+  warden_type  ENUM('boys','girls') NOT NULL,
+  hostel_id    INT UNSIGNED NULL,
+  CONSTRAINT fk_warden_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  CONSTRAINT fk_warden_hostel FOREIGN KEY (hostel_id) REFERENCES hostels(hostel_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 CREATE TABLE rooms (
   room_id     INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   hostel_id   INT UNSIGNED NOT NULL,

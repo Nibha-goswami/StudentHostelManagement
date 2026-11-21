@@ -3,24 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login — Smart Campus HMS</title>
-  <meta name="description" content="Login to Smart Campus Hostel Management System">
+  <title>University Portal Login — Smart Campus</title>
+  <meta name="description" content="Official Smart Campus Hostel Management Portal Login">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <style>
-    .login-card { max-width: 480px; }
-    .demo-accounts { max-height: 230px; overflow-y: auto; }
-    .demo-accounts::-webkit-scrollbar { width: 4px; }
-    .demo-accounts::-webkit-scrollbar-thumb { background: var(--border); border-radius:4px; }
-    .gender-tag { font-size:0.62rem; font-weight:700; padding:0.1rem 0.4rem;
-                  border-radius:4px; white-space:nowrap; }
-    .gender-f   { background:rgba(244,114,182,0.15); color:#f472b6; }
-    .gender-m   { background:rgba(96,165,250,0.15);  color:#60a5fa; }
-    .pass-badge { background:rgba(99,102,241,0.13); color:var(--accent);
-                  font-family:monospace; font-size:0.65rem;
-                  padding:0.1rem 0.45rem; border-radius:4px; }
+    .login-card {
+      max-width: 540px;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(99, 102, 241, 0.1);
+      backdrop-filter: blur(12px);
+    }
+    .portal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      color: #a5b4fc;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.85rem;
+    }
+    .role-tabs {
+      display: flex;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      margin-top: 1.25rem;
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+    }
+    .role-tab-btn {
+      flex: 1;
+      padding: 0.55rem 0.25rem;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      font-family: inherit;
+    }
+    .role-tab-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .role-tab-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #ffffff;
+      box-shadow: 0 4px 14px var(--glow);
+      font-weight: 700;
+    }
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-wrapper input {
+      padding-right: 2.75rem;
+    }
+    .password-toggle-btn {
+      position: absolute;
+      right: 0.75rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      transition: color 0.15s ease;
+      outline: none;
+    }
+    .password-toggle-btn:hover {
+      color: var(--text);
+    }
+    .forgot-link {
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .forgot-link:hover {
+      color: #818cf8;
+      text-decoration: underline;
+    }
+    .institution-footer {
+      text-align: center;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -36,134 +129,97 @@
   {% endwith %}
 </div>
 
+{% set active_role = request.form.get('role', 'student') %}
+{% set role_titles = {
+  'student': 'Sign in as Student',
+  'admin': 'Sign in as Admin',
+  'boys_warden': 'Sign in as Boys Warden (Vikram Sharma)',
+  'girls_warden': 'Sign in as Girls Warden (Reena Verma)',
+  'mess_manager': 'Sign in as Mess Manager',
+  'maintenance': 'Sign in as Maintenance'
+} %}
+{% set subtitle = role_titles.get(active_role, 'Sign in as Student') %}
+
 <div class="login-page">
   <div class="login-bg"></div>
   <div class="login-card">
-    <div class="login-logo">&#127963;</div>
-    <h1 class="login-title">Smart Campus</h1>
-    <p class="login-sub">Hostel Management System &mdash; Sign in to continue</p>
-
-    <!-- ── STAFF / ADMIN ── -->
-    <div class="demo-accounts mb-2">
-      <div class="demo-title">Staff &amp; Admin &mdash; click to fill</div>
-
-      <div class="demo-item" data-email="admin@smartcampus.edu" data-pass="Demo@1234">
-        <span class="demo-email">admin@smartcampus.edu</span>
-        <span class="gender-tag" style="background:rgba(99,102,241,0.15);color:var(--accent)">Admin</span>
-      </div>
-      <div class="demo-item" data-email="warden@smartcampus.edu" data-pass="Demo@1234">
-        <span class="demo-email">warden@smartcampus.edu</span>
-        <span class="gender-tag" style="background:rgba(139,92,246,0.15);color:var(--accent2)">Warden</span>
-      </div>
-      <div class="demo-item" data-email="mess@smartcampus.edu" data-pass="Demo@1234">
-        <span class="demo-email">mess@smartcampus.edu</span>
-        <span class="gender-tag" style="background:rgba(6,182,212,0.15);color:var(--accent3)">Mess Mgr</span>
-      </div>
-      <div class="demo-item" data-email="electrician@smartcampus.edu" data-pass="Demo@1234">
-        <span class="demo-email">electrician@smartcampus.edu</span>
-        <span class="gender-tag" style="background:rgba(245,158,11,0.15);color:var(--warning)">Maintenance</span>
-      </div>
+    <div style="text-align:center">
+      <div class="login-logo">&#127963;</div>
+      <div class="portal-badge"><i class="fas fa-shield-halved"></i> Official University Portal</div>
+      <h1 class="login-title">Smart Campus</h1>
+      <p class="login-sub" id="loginSubtitle">{{ subtitle }}</p>
     </div>
 
-    <!-- ── STUDENTS ── -->
-    <div class="demo-accounts">
-      <div class="demo-title">Students &mdash; each has their own password</div>
-
-      <div class="demo-item" data-email="nibha.kumari@student.edu" data-pass="Nibha@123">
-        <span class="demo-email">Nibha Kumari</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
-          <span class="pass-badge">Nibha@123</span>
-        </span>
-      </div>
-
-      <div class="demo-item" data-email="diya.verma@student.edu" data-pass="Diya@123">
-        <span class="demo-email">Diya Verma</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
-          <span class="pass-badge">Diya@123</span>
-        </span>
-      </div>
-
-      <div class="demo-item" data-email="rohan.gupta@student.edu" data-pass="Rohan@123">
-        <span class="demo-email">Rohan Gupta</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-m">&#9794; Boy &mdash; C.V Raman</span>
-          <span class="pass-badge">Rohan@123</span>
-        </span>
-      </div>
-
-      <div class="demo-item" data-email="ananya.singh@student.edu" data-pass="Ananya@123">
-        <span class="demo-email">Ananya Singh</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
-          <span class="pass-badge">Ananya@123</span>
-        </span>
-      </div>
-
-      <div class="demo-item" data-email="karan.mehta@student.edu" data-pass="Karan@123">
-        <span class="demo-email">Karan Mehta</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-m">&#9794; Boy &mdash; C.V Raman</span>
-          <span class="pass-badge">Karan@123</span>
-        </span>
-      </div>
-
-      <div class="demo-item" data-email="ishita.joshi@student.edu" data-pass="Ishita@123">
-        <span class="demo-email">Ishita Joshi</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
-          <span class="pass-badge">Ishita@123</span>
-        </span>
-      </div>
-
-      <div class="demo-item" data-email="vivaan.patel@student.edu" data-pass="Vivaan@123">
-        <span class="demo-email">Vivaan Patel</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-m">&#9794; Boy &mdash; C.V Raman</span>
-          <span class="pass-badge">Vivaan@123</span>
-        </span>
-      </div>
-
-      <div class="demo-item" data-email="meera.nair@student.edu" data-pass="Meera@123">
-        <span class="demo-email">Meera Nair</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
-          <span class="gender-tag gender-f">&#9792; Girl &mdash; Saraswati</span>
-          <span class="pass-badge">Meera@123</span>
-        </span>
-      </div>
+    <!-- ── ROLE SELECTION TABS ── -->
+    <div class="role-tabs" role="tablist" aria-label="Portal Role Selection">
+      <button type="button" class="role-tab-btn {% if active_role=='student' %}active{% endif %}"
+              data-role="student" data-title="Sign in as Student" data-placeholder="student@student.edu" role="tab">
+        <i class="fas fa-user-graduate"></i> Student
+      </button>
+      <button type="button" class="role-tab-btn {% if active_role=='admin' %}active{% endif %}"
+              data-role="admin" data-title="Sign in as Admin" data-placeholder="admin@smartcampus.edu" role="tab">
+        <i class="fas fa-shield-halved"></i> Admin
+      </button>
+      <button type="button" class="role-tab-btn {% if active_role=='boys_warden' %}active{% endif %}"
+              data-role="boys_warden" data-title="Sign in as Boys Warden (Vikram Sharma)" data-placeholder="boys.warden@smartcampus.edu" role="tab">
+        <i class="fas fa-person-shelter"></i> Boys Warden
+      </button>
+      <button type="button" class="role-tab-btn {% if active_role=='girls_warden' %}active{% endif %}"
+              data-role="girls_warden" data-title="Sign in as Girls Warden (Reena Verma)" data-placeholder="girls.warden@smartcampus.edu" role="tab">
+        <i class="fas fa-person-shelter"></i> Girls Warden
+      </button>
+      <button type="button" class="role-tab-btn {% if active_role=='mess_manager' %}active{% endif %}"
+              data-role="mess_manager" data-title="Sign in as Mess Manager" data-placeholder="mess@smartcampus.edu" role="tab">
+        <i class="fas fa-utensils"></i> Mess Mgr
+      </button>
+      <button type="button" class="role-tab-btn {% if active_role=='maintenance' %}active{% endif %}"
+              data-role="maintenance" data-title="Sign in as Maintenance" data-placeholder="staff@smartcampus.edu" role="tab">
+        <i class="fas fa-wrench"></i> Maintenance
+      </button>
     </div>
 
-    <!-- ── LOGIN FORM ── -->
-    <form method="POST" action="{{ url_for('auth.login') }}" style="margin-top:1rem">
+    <!-- ── OFFICIAL LOGIN FORM ── -->
+    <form method="POST" action="{{ url_for('auth.login') }}" style="margin-top:0.5rem" autocomplete="off">
+      <input type="hidden" id="selectedRole" name="role" value="{{ active_role }}">
+
       <div class="form-group">
-        <label class="form-label" for="email">Email Address</label>
+        <label class="form-label" for="email">
+          <i class="fas fa-envelope" style="margin-right:0.35rem;color:var(--text-muted)"></i> Email Address
+        </label>
         <input type="email" id="email" name="email" class="form-control"
-               placeholder="your@email.edu" required
-               value="{{ request.form.get('email','') }}">
+               placeholder="student@student.edu" required
+               value="" autocomplete="off" autofocus>
       </div>
+
       <div class="form-group">
-        <label class="form-label" for="password">Password</label>
-        <input type="password" id="password" name="password" class="form-control"
-               placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" required>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
+          <label class="form-label" for="password" style="margin-bottom:0">
+            <i class="fas fa-lock" style="margin-right:0.35rem;color:var(--text-muted)"></i> Password
+          </label>
+          <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">
+            Forgot Password?
+          </a>
+        </div>
+        <div class="password-wrapper">
+          <input type="password" id="password" name="password" class="form-control"
+                 placeholder="Enter your password" required autocomplete="new-password" value="">
+          <button type="button" id="togglePasswordBtn" class="password-toggle-btn"
+                  title="Show/hide password" aria-label="Toggle password visibility">
+            <i class="fas fa-eye" id="passwordEyeIcon"></i>
+          </button>
+        </div>
       </div>
+
       <button type="submit" class="btn btn-primary w-full"
-              style="justify-content:center;padding:0.75rem">
-        <i class="fas fa-arrow-right-to-bracket"></i> Sign In
+              style="justify-content:center;padding:0.85rem;font-size:0.95rem;margin-top:0.5rem">
+        <i class="fas fa-arrow-right-to-bracket" style="margin-right:0.4rem"></i> Sign In
       </button>
     </form>
 
-    <div class="divider" style="margin-top:1rem">staff password</div>
-    <div style="text-align:center;font-size:0.8rem;color:var(--text-muted)">
-      <code style="background:var(--bg-card2);padding:0.3rem 0.75rem;border-radius:6px;font-size:0.85rem;letter-spacing:1px">Demo@1234</code>
-      &nbsp;&nbsp;
-      <span style="color:var(--text-dim)">students: <em>FirstName@123</em></span>
-    </div>
-
-    <div style="text-align:center;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)">
-      <span style="color:var(--text-muted);font-size:0.83rem">New student?</span>
+    <div class="institution-footer" id="registerFooter" style="display: {% if active_role=='student' %}block{% else %}none{% endif %}">
+      <span style="color:var(--text-muted);font-size:0.85rem">New student?</span>
       <a href="{{ url_for('auth.register') }}"
-         style="color:var(--accent);font-weight:700;font-size:0.85rem;text-decoration:none;margin-left:0.4rem">
+         style="color:var(--accent);font-weight:700;font-size:0.85rem;text-decoration:none;margin-left:0.35rem">
         <i class="fas fa-user-plus" style="margin-right:0.25rem"></i>Create Your Account &rarr;
       </a>
     </div>
@@ -172,19 +228,66 @@
 
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script>
-  // Override demo-item click to also fill individual passwords
-  document.querySelectorAll('.demo-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const email = item.dataset.email;
-      const pass  = item.dataset.pass;
-      const emailField = document.getElementById('email');
-      const passField  = document.getElementById('password');
-      if (emailField) emailField.value = email;
-      if (passField && pass) passField.value = pass;
-      item.style.background = 'rgba(99,102,241,0.2)';
-      setTimeout(() => item.style.background = '', 500);
+  const roleButtons = document.querySelectorAll('.role-tab-btn');
+  const roleInput = document.getElementById('selectedRole');
+  const subtitleEl = document.getElementById('loginSubtitle');
+  const registerFooter = document.getElementById('registerFooter');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+
+  // Clear fields on page load or when restored from browser back/forward cache
+  function clearCredentials() {
+    if (emailInput) emailInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+  }
+  window.addEventListener('pageshow', clearCredentials);
+  window.addEventListener('DOMContentLoaded', clearCredentials);
+  setTimeout(clearCredentials, 50);
+  setTimeout(clearCredentials, 250);
+
+  // Role tab switching
+  roleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const role = btn.dataset.role;
+      const title = btn.dataset.title;
+      const ph = btn.dataset.placeholder;
+
+      // Update active tab styling
+      roleButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update hidden role input
+      if (roleInput) roleInput.value = role;
+
+      // Update subtitle text dynamically
+      if (subtitleEl && title) subtitleEl.textContent = title;
+
+      // Update input placeholder
+      if (emailInput && ph) emailInput.placeholder = ph;
+
+      // Clear input fields when switching role tabs
+      if (emailInput) emailInput.value = '';
+      if (passwordInput) passwordInput.value = '';
+
+      // Show registration link only for Student tab
+      if (registerFooter) {
+        registerFooter.style.display = (role === 'student') ? 'block' : 'none';
+      }
     });
   });
+
+  // Show / Hide Password toggle
+  const toggleBtn = document.getElementById('togglePasswordBtn');
+  const eyeIcon = document.getElementById('passwordEyeIcon');
+
+  if (toggleBtn && passwordInput && eyeIcon) {
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.getAttribute('type') === 'password';
+      passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+      eyeIcon.classList.toggle('fa-eye', !isPassword);
+      eyeIcon.classList.toggle('fa-eye-slash', isPassword);
+    });
+  }
 </script>
 </body>
 </html>

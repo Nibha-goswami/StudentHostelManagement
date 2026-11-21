@@ -1,32 +1,39 @@
 {% extends 'base.html' %}
 {% block title %}Users{% endblock %}
 {% block page_title %}User Management{% endblock %}
-{% block page_sub %}All system users{% endblock %}
+{% block page_sub %}All system users and credentials{% endblock %}
 
 {% block sidebar %}
   <div class="nav-section">Main</div>
   <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
   <div class="nav-section">Management</div>
-  <a href="{{ url_for('admin.users') }}" class="nav-link active"><span class="icon"><i class="fas fa-users"></i></span> Users</a>
+  <a href="{{ url_for('admin.students') }}" class="nav-link"><span class="icon"><i class="fas fa-user-graduate"></i></span> Students</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-link active"><span class="icon"><i class="fas fa-users"></i></span> All Users</a>
   <a href="{{ url_for('admin.hostels') }}" class="nav-link"><span class="icon"><i class="fas fa-building"></i></span> Hostels</a>
   <a href="{{ url_for('admin.complaints') }}" class="nav-link"><span class="icon"><i class="fas fa-wrench"></i></span> Complaints</a>
   <a href="{{ url_for('admin.finance') }}" class="nav-link"><span class="icon"><i class="fas fa-indian-rupee-sign"></i></span> Finance</a>
+  <div class="nav-section">Portals</div>
+  <a href="{{ url_for('warden.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-key"></i></span> Warden Portal</a>
+  <a href="{{ url_for('mess.dashboard') }}" class="nav-link"><span class="icon"><i class="fas fa-utensils"></i></span> Mess Portal</a>
 {% endblock %}
 
 {% block content %}
 <div class="card">
   <div class="card-header">
     <span class="card-title"><i class="fas fa-users" style="color:var(--accent);margin-right:0.5rem"></i>All Users ({{ users|length }})</span>
+    <a href="{{ url_for('admin.students') }}" class="btn btn-ghost btn-sm">
+      <i class="fas fa-user-graduate" style="margin-right:0.35rem"></i> View Students Directory &rarr;
+    </a>
   </div>
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Joined</th><th>Action</th></tr>
+        <tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
       </thead>
       <tbody>
         {% for u in users %}
         <tr>
-          <td class="name">{{ u.full_name }}</td>
+          <td class="name fw-bold">{{ u.full_name }}</td>
           <td class="text-muted">{{ u.email }}</td>
           <td class="text-muted">{{ u.phone or '—' }}</td>
           <td>
@@ -46,12 +53,19 @@
           </td>
           <td class="text-muted text-xs">{{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}</td>
           <td>
-            <form method="POST" action="{{ url_for('admin.toggle_user', uid=u.user_id) }}" style="display:inline">
-              <button class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-success{% endif %}"
-                      onclick="return confirm('Toggle user status?')">
-                {% if u.is_active %}<i class="fas fa-ban"></i> Deactivate{% else %}<i class="fas fa-check"></i> Activate{% endif %}
+            <div style="display:flex;gap:0.4rem;align-items:center">
+              <button type="button" class="btn btn-sm btn-ghost" title="Reset User Password"
+                      onclick="openUserResetModal({{ u.user_id }}, '{{ u.full_name|replace("'","\\'") }}', '{{ u.role.replace('_',' ').title() }}')">
+                <i class="fas fa-key"></i> Reset Pass
               </button>
-            </form>
+              <form method="POST" action="{{ url_for('admin.toggle_user', uid=u.user_id) }}" style="display:inline">
+                <button class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-success{% endif %}"
+                        title="{% if u.is_active %}Deactivate User{% else %}Activate User{% endif %}"
+                        onclick="return confirm('Toggle status for {{ u.full_name }}?')">
+                  {% if u.is_active %}<i class="fas fa-ban"></i>{% else %}<i class="fas fa-check"></i>{% endif %}
+                </button>
+              </form>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -59,4 +73,69 @@
     </table>
   </div>
 </div>
+
+<!-- ── Admin Reset User Password Modal ── -->
+<div class="modal-backdrop" id="userResetModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title">
+        <i class="fas fa-key" style="color:var(--accent);margin-right:0.5rem"></i>
+        Reset Password
+      </span>
+      <button class="btn-icon" onclick="closeModal('userResetModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="POST" id="userResetForm">
+      <div class="modal-body">
+        <div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;margin-bottom:1.25rem">
+          <div id="userResetName" class="fw-bold" style="font-size:0.95rem"></div>
+          <div id="userResetRole" class="text-xs text-muted mt-1"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="new_user_password">New Password</label>
+          <div style="position:relative">
+            <input type="password" id="new_user_password" name="new_password" class="form-control"
+                   placeholder="Enter new password (min 6 chars)" minlength="6" required style="padding-right:2.5rem">
+            <button type="button" class="btn-icon" style="position:absolute;right:0.5rem;top:50%;transform:translateY(-50%)"
+                    onclick="toggleUserPass()">
+              <i class="fas fa-eye" id="userPassIcon"></i>
+            </button>
+          </div>
+          <div class="text-xs text-muted mt-1">
+            This will immediately update the login password for this account.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('userResetModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-check"></i> Update Password
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openUserResetModal(userId, name, role) {
+  document.getElementById('userResetForm').action = `/admin/user/${userId}/reset-password`;
+  document.getElementById('userResetName').textContent = name;
+  document.getElementById('userResetRole').textContent = `Role: ${role}`;
+  document.getElementById('new_user_password').value = '';
+  openModal('userResetModal');
+}
+
+function toggleUserPass() {
+  const input = document.getElementById('new_user_password');
+  const icon = document.getElementById('userPassIcon');
+  if (input && icon) {
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    icon.classList.toggle('fa-eye', !isPass);
+    icon.classList.toggle('fa-eye-slash', isPass);
+  }
+}
+</script>
 {% endblock %}

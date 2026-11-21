@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Warden Dashboard{% endblock %}
-{% block page_title %}Warden Portal{% endblock %}
-{% block page_sub %}Room applications, leaves, and transfers{% endblock %}
+{% block title %}{{ current_user.display_role }} Dashboard{% endblock %}
+{% block page_title %}{{ current_user.display_role }} Portal{% endblock %}
+{% block page_sub %}{% if current_user.hostel_name %}{{ current_user.hostel_name }} — {% endif %}Room applications, leaves, and transfers{% endblock %}
 
 {% block sidebar %}
   <div class="nav-section">Warden</div>
   <a href="{{ url_for('warden.dashboard') }}" class="nav-link active"><span class="icon"><i class="fas fa-gauge"></i></span> Dashboard</a>
+  <a href="{{ url_for('warden.students') }}" class="nav-link"><span class="icon"><i class="fas fa-user-graduate"></i></span> Student Records</a>
   <a href="{{ url_for('warden.rooms') }}" class="nav-link"><span class="icon"><i class="fas fa-bed"></i></span> Room Overview</a>
   {% if current_user.role=='admin' %}
   <div class="nav-section">Admin</div>
